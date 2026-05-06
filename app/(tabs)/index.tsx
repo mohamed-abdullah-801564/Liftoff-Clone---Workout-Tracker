@@ -27,13 +27,19 @@ export default function HomeScreen() {
     const [weeklyVolume, setWeeklyVolume] = useState('0')
     const [trend, setTrend] = useState(0)
     const [workouts, setWorkouts] = useState<any[]>([])
+    const [activeWorkout, setActiveWorkout] = useState<any[] | null>(null)
 
     const loadData = useCallback(async () => {
         setLoading(true)
         try {
             const data = await AsyncStorage.getItem('workouts')
-            const savedWorkouts = data ? JSON.parse(data) : []
+            const currentEx = await AsyncStorage.getItem('current_workout_exercises')
             
+            const savedWorkouts = data ? JSON.parse(data) : []
+            const currentList = currentEx ? JSON.parse(currentEx) : []
+            
+            setActiveWorkout(currentList.length > 0 ? currentList : null)
+
             // Sort by date descending
             const sorted = savedWorkouts.sort((a: any, b: any) => 
                 new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -141,24 +147,43 @@ export default function HomeScreen() {
                 </View>
             </Card>
 
+            {/* Active Workout Card */}
+            {activeWorkout && (
+                <Pressable onPress={() => router.push('/workout')}>
+                    <Card style={s.activeCard}>
+                        <View style={s.activeHeader}>
+                            <View style={s.liveBadge}>
+                                <View style={s.liveDot} />
+                                <Text style={s.liveText}>IN PROGRESS</Text>
+                            </View>
+                            <Text style={s.activeTime}>Active Now</Text>
+                        </View>
+                        <Text style={s.activeTitle}>Current Workout</Text>
+                        <Text style={s.activeSub}>{activeWorkout.length} exercises added • Tap to resume</Text>
+                    </Card>
+                </Pressable>
+            )}
+
             {/* Start Workout Primary Action */}
-            <Pressable 
-                style={({ pressed }) => [s.startBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }]}
-                onPress={() => router.push('/workout')}
-            >
-                <View style={s.startBtnContent}>
-                    <View style={s.playIconWrap}>
-                        <Play size={22} color="#fff" fill="#fff" />
+            {!activeWorkout && (
+                <Pressable 
+                    style={({ pressed }) => [s.startBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }]}
+                    onPress={() => router.push('/workout')}
+                >
+                    <View style={s.startBtnContent}>
+                        <View style={s.playIconWrap}>
+                            <Play size={22} color="#fff" fill="#fff" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={s.startBtnTitle}>Start Workout</Text>
+                            <Text style={s.startBtnSub}>Select from your routines or a new one</Text>
+                        </View>
+                        <ChevronRight size={20} color="rgba(255,255,255,0.5)" />
                     </View>
-                    <View style={{ flex: 1 }}>
-                        <Text style={s.startBtnTitle}>Start Workout</Text>
-                        <Text style={s.startBtnSub}>Select from your routines or a new one</Text>
-                    </View>
-                    <ChevronRight size={20} color="rgba(255,255,255,0.5)" />
-                </View>
-                {/* Glow effect */}
-                <View style={s.btnGlow} />
-            </Pressable>
+                    {/* Glow effect */}
+                    <View style={s.btnGlow} />
+                </Pressable>
+            )}
 
             {/* Recent Workouts List */}
             <View style={s.sectionHeader}>
@@ -242,4 +267,13 @@ const s = StyleSheet.create({
     emptyText: { fontSize: 15, color: TEXT_SECONDARY, fontWeight: '500', textAlign: 'center' },
     emptyBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: ACCENT, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 12 },
     emptyBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+
+    activeCard: { padding: 20, backgroundColor: SURFACE, borderColor: 'rgba(59, 130, 246, 0.3)', borderWidth: 1.5, gap: 12 },
+    activeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    liveBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(59, 130, 246, 0.1)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+    liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: ACCENT },
+    liveText: { fontSize: 10, fontWeight: '800', color: ACCENT, letterSpacing: 0.5 },
+    activeTime: { fontSize: 12, color: TEXT_TERTIARY, fontWeight: '600' },
+    activeTitle: { fontSize: 20, fontWeight: '800', color: '#fff', letterSpacing: -0.3 },
+    activeSub: { fontSize: 14, color: TEXT_SECONDARY, fontWeight: '500' },
 })

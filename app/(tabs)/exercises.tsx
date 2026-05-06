@@ -142,7 +142,7 @@ export default function ExercisesScreen() {
                             {recommended.map(ex => (
                                 <Card key={ex.id} style={s.recCard}>
                                     <View style={s.recInfo}>
-                                        <Text style={s.recName} numberOfLines={1}>{ex.name}</Text>
+                                        <Text style={s.recName} numberOfLines={2}>{ex.name}</Text>
                                         <Text style={s.recMuscle}>{ex.muscle}</Text>
                                     </View>
                                     <Pressable 
@@ -232,11 +232,11 @@ const s = StyleSheet.create({
     promoBtn: { backgroundColor: SURFACE3, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
     promoBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
 
-    recCard: { width: 160, padding: 12, gap: 12, backgroundColor: SURFACE2, borderWidth: 1, borderColor: BORDER },
-    recInfo: { gap: 2 },
+    recCard: { width: 200, padding: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: SURFACE2, borderWidth: 1, borderColor: BORDER },
+    recInfo: { flex: 1, paddingRight: 12, gap: 2 },
     recName: { fontSize: 14, fontWeight: '700', color: '#fff' },
     recMuscle: { fontSize: 11, color: TEXT_TERTIARY, fontWeight: '600', textTransform: 'uppercase' },
-    recAddBtn: { backgroundColor: ACCENT, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', position: 'absolute', bottom: 12, right: 12 },
+    recAddBtn: { backgroundColor: ACCENT, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
 
     listContainer: { paddingHorizontal: 20, gap: 10 },
     exCard: { flexDirection: 'row', alignItems: 'center', padding: 12, gap: 12 },
