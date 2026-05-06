@@ -13,20 +13,20 @@
 
 // ── Primary brand color ───────────────────────────────────────────────────────
 // 🎨 Change this one value to rebrand the whole app
-export const ACCENT = '#0ea5a4'           // teal — swap to your primary brand color
+export const ACCENT = '#3B82F6'           // electric blue — swap to your primary brand color
 
 // Derived from ACCENT — adjust opacity as needed
-export const ACCENT_DIM = 'rgba(14,165,164,0.12)'
-export const ACCENT_BORDER = 'rgba(14,165,164,0.30)'
-export const ACCENT_GLOW = 'rgba(14,165,164,0.20)'
+export const ACCENT_DIM = 'rgba(59,130,246,0.12)'
+export const ACCENT_BORDER = 'rgba(59,130,246,0.30)'
+export const ACCENT_GLOW = 'rgba(59,130,246,0.20)'
 // Text color on dark background using accent tone
-export const ACCENT_LIGHT = '#5eead4'
+export const ACCENT_LIGHT = '#60a5fa'
 
 // ── Backgrounds ───────────────────────────────────────────────────────────────
-export const BG = '#0d0d0d'        // main app background
-export const SURFACE = '#1a1a1a'        // cards, inputs
-export const SURFACE2 = '#242424'        // elevated surface (sheet panels, etc.)
-export const SURFACE3 = '#2e2e2e'        // even more elevated
+export const BG = '#0A0A0A'        // main app background
+export const SURFACE = '#111111'        // cards, inputs
+export const SURFACE2 = '#161616'        // elevated surface (sheet panels, etc.)
+export const SURFACE3 = '#1F2937'        // even more elevated
 
 // ── Text ──────────────────────────────────────────────────────────────────────
 export const TEXT_PRIMARY = '#ffffff'

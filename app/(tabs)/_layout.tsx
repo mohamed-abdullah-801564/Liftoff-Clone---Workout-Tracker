@@ -7,7 +7,7 @@
  * the screens registered here.
  */
 import { Tabs } from 'expo-router'
-import { House, Compass, Bell, CircleUser } from 'lucide-react-native'
+import { House, Compass, Bell, CircleUser, Dumbbell } from 'lucide-react-native'
 import TabBar, { TAB_BAR_HEIGHT } from '@/components/TabBar'
 import { BG } from '@/lib/theme'
 
@@ -28,6 +28,16 @@ export default function TabsLayout() {
           tabBarLabel: 'Home',
           tabBarIcon: ({ color, size }) => (
             <House size={size} color={color} strokeWidth={1.6} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="workout"
+        options={{
+          tabBarLabel: 'Workout',
+          tabBarIcon: ({ color, size }) => (
+            <Dumbbell size={size} color={color} strokeWidth={1.6} />
           ),
         }}
       />
