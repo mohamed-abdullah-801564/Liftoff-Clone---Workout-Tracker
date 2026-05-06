@@ -185,3 +185,34 @@ Fix Name not syncing to Home screen... The bottom navigation is broken and showi
 - Cleanup: Deleted physical files for unused tabs to ensure clean routing: `activity.tsx`, `explore.tsx`, `leaderboard.tsx`.
 
 ---
+
+## [2026-05-06] - Prompt
+In app/(tabs)/profile.tsx... Add a Weekly / Monthly toggle above the leaderboard list... show scaled up volumes for all simulated users... calculation from all completed workouts...
+
+## What was done
+- Modified [profile.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/profile.tsx):
+    - Added `leaderboardTab` state to toggle between Weekly and Monthly community rankings.
+    - Implemented a custom mini-toggle UI component above the leaderboard.
+    - Updated volume calculation logic:
+        - **Monthly (User)**: Fetches all workouts from the current calendar month to calculate total tonnage.
+        - **Monthly (Simulated)**: Automatically scales virtual competitor volumes by 4x to maintain a realistic leaderboard baseline.
+    - Refined the section header to dynamically display the active timeframe (e.g., "COMMUNITY RANKINGS (MONTHLY)").
+
+---
+
+## [2026-05-06] - Prompt
+Do a full polish pass... Add smooth fade/slide transition... loading states... haptic feedback... filter 0kg PRs... PR celebration animation... responsive on Android...
+
+## What was done
+- Modified [_layout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/_layout.tsx):
+    - Added `animation: 'fade'` to tab navigation for smooth transitions between views.
+- Modified [workout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/workout.tsx):
+    - Integrated `expo-haptics` for tactile feedback on set completion and workout finish.
+    - Implemented a **PR Celebration Overlay**: High-fidelity animated trophy popup that triggers when a user exceeds their previous best weight for an exercise.
+    - Added comprehensive loading states and fixed UI scaling for better Android responsiveness.
+- Modified [profile.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/profile.tsx):
+    - Refined PR logic to hide 0 kg entries, ensuring the records list only shows meaningful achievements.
+    - Standardized `ActivityIndicator` loading states across all data-heavy operations.
+- UI/UX Polish: Adjusted spacing, font weights, and color contrast across all screens to ensure a premium look on various screen sizes.
+
+---

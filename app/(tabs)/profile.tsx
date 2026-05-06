@@ -36,8 +36,10 @@ export default function ProfileScreen() {
         totalWorkouts: 0,
         totalVolume: 0,
         streak: 0,
-        weeklyVolume: 0
+        weeklyVolume: 0,
+        monthlyVolume: 0
     })
+    const [leaderboardTab, setLeaderboardTab] = useState<'weekly' | 'monthly'>('weekly')
     const [prs, setPrs] = useState<any[]>([])
 
     const loadData = useCallback(async () => {
@@ -51,11 +53,15 @@ export default function ProfileScreen() {
             const totalWorkouts = workouts.length
             const totalVolume = workouts.reduce((acc: number, w: any) => acc + (w.volume || 0), 0)
             
-            // Weekly Volume
+            // Calculate weekly/monthly volumes
             const now = new Date()
-            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1)))
+            const startOfWeek = new Date(now.getTime())
+            startOfWeek.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1))
             startOfWeek.setHours(0, 0, 0, 0)
             const weeklyVolume = workouts.filter((w: any) => new Date(w.date) >= startOfWeek).reduce((acc: number, w: any) => acc + (w.volume || 0), 0)
+
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+            const monthlyVolume = workouts.filter((w: any) => new Date(w.date) >= startOfMonth).reduce((acc: number, w: any) => acc + (w.volume || 0), 0)
 
             // Calculate streak
             let streak = 0
@@ -75,7 +81,7 @@ export default function ProfileScreen() {
                 }
             }
 
-            setStats({ totalWorkouts, totalVolume, streak, weeklyVolume })
+            setStats({ totalWorkouts, totalVolume, streak, weeklyVolume, monthlyVolume })
 
             // Calculate PRs
             const prMap = new Map<string, number>()
@@ -86,7 +92,11 @@ export default function ProfileScreen() {
                 })
             })
 
-            const prList = Array.from(prMap.entries()).map(([name, weight]) => ({ name, weight })).sort((a, b) => b.weight - a.weight).slice(0, 5)
+            const prList = Array.from(prMap.entries())
+                .map(([name, weight]) => ({ name, weight }))
+                .filter(pr => pr.weight > 0)
+                .sort((a, b) => b.weight - a.weight)
+                .slice(0, 5)
             setPrs(prList)
 
         } catch (e) {
@@ -99,14 +109,16 @@ export default function ProfileScreen() {
     useFocusEffect(useCallback(() => { loadData() }, [loadData]))
 
     const leaderboardData = useMemo(() => {
+        const multiplier = leaderboardTab === 'weekly' ? 1 : 4
         const entries = SIMULATED_USERS.map(u => ({
             id: u.id,
             name: u.name,
-            volume: Math.floor(15000 + (parseInt(u.id) * 1200) + Math.random() * 500)
+            volume: Math.floor((15000 + (parseInt(u.id) * 1200) + Math.random() * 500) * multiplier)
         }))
-        entries.push({ id: 'me', name: userName, volume: stats.weeklyVolume })
+        const myVol = leaderboardTab === 'weekly' ? stats.weeklyVolume : stats.monthlyVolume
+        entries.push({ id: 'me', name: userName, volume: myVol })
         return entries.sort((a, b) => b.volume - a.volume)
-    }, [userName, stats.weeklyVolume])
+    }, [userName, stats.weeklyVolume, stats.monthlyVolume, leaderboardTab])
 
     const handleSaveName = async () => {
         if (!tempName.trim()) return
@@ -121,7 +133,7 @@ export default function ProfileScreen() {
             { text: "Reset", style: "destructive", onPress: async () => {
                 await AsyncStorage.clear()
                 setUserName('Alex Riggs')
-                setStats({ totalWorkouts: 0, totalVolume: 0, streak: 0, weeklyVolume: 0 })
+                setStats({ totalWorkouts: 0, totalVolume: 0, streak: 0, weeklyVolume: 0, monthlyVolume: 0 })
                 setPrs([])
                 router.replace('/')
             }}
@@ -196,8 +208,24 @@ export default function ProfileScreen() {
                 {/* Leaderboard Section */}
                 <View style={s.section}>
                     <View style={s.sectionHeader}>
-                        <Users size={18} color={ACCENT} />
-                        <Text style={s.sectionTitle}>COMMUNITY RANKINGS (WEEKLY)</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                            <Users size={18} color={ACCENT} />
+                            <Text style={s.sectionTitle}>COMMUNITY RANKINGS ({leaderboardTab.toUpperCase()})</Text>
+                        </View>
+                        <View style={s.miniToggle}>
+                            <Pressable 
+                                onPress={() => setLeaderboardTab('weekly')}
+                                style={[s.miniTab, leaderboardTab === 'weekly' && s.miniTabActive]}
+                            >
+                                <Text style={[s.miniTabText, leaderboardTab === 'weekly' && s.miniTabTextActive]}>W</Text>
+                            </Pressable>
+                            <Pressable 
+                                onPress={() => setLeaderboardTab('monthly')}
+                                style={[s.miniTab, leaderboardTab === 'monthly' && s.miniTabActive]}
+                            >
+                                <Text style={[s.miniTabText, leaderboardTab === 'monthly' && s.miniTabTextActive]}>M</Text>
+                            </Pressable>
+                        </View>
                     </View>
                     <Card style={s.listCard}>
                         {leaderboardData.map((user, index) => (
@@ -286,4 +314,10 @@ const s = StyleSheet.create({
     emptyText: { padding: 16, textAlign: 'center', color: TEXT_TERTIARY, fontSize: 13 },
     logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginVertical: 10 },
     logoutText: { fontSize: 14, fontWeight: '600', color: TEXT_TERTIARY },
+
+    miniToggle: { flexDirection: 'row', backgroundColor: SURFACE, borderRadius: 8, padding: 2, borderWidth: 1, borderColor: BORDER },
+    miniTab: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
+    miniTabActive: { backgroundColor: SURFACE2 },
+    miniTabText: { fontSize: 10, fontWeight: '800', color: TEXT_TERTIARY },
+    miniTabTextActive: { color: '#fff' },
 })

@@ -11,6 +11,7 @@ export default function TabsLayout() {
         headerShown: false,
         sceneStyle: { backgroundColor: BG },
         tabBarStyle: { height: TAB_BAR_HEIGHT },
+        animation: 'fade',
       }}
     >
       <Tabs.Screen
