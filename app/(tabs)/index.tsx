@@ -16,7 +16,7 @@ import {
     BORDER,
 } from '@/lib/theme'
 import { TAB_BAR_CLEARANCE } from '@/components/TabBar'
-import { Flame, Trophy, Calendar, ChevronRight, Play, ArrowUpRight, Plus } from 'lucide-react-native'
+import { Flame, Trophy, Calendar, ChevronRight, Play, ArrowUpRight, Plus, Accessibility, Dumbbell } from 'lucide-react-native'
 
 const { width } = Dimensions.get('window')
 
@@ -150,8 +150,17 @@ export default function HomeScreen() {
                     <Text style={s.heroSub}>Activity from last 7 days</Text>
                 </View>
             </Card>
-
-            {/* Active Workout Card */}
+            {/* Quick Actions */}
+            <View style={s.actionRow}>
+                <Pressable style={s.actionBtn} onPress={() => router.push('/muscle-heatmap')}>
+                    <Accessibility size={20} color={ACCENT} />
+                    <Text style={s.actionBtnText}>Muscle Map</Text>
+                </Pressable>
+                <Pressable style={s.actionBtn} onPress={() => router.push('/workout')}>
+                    <Dumbbell size={20} color={ACCENT} />
+                    <Text style={s.actionBtnText}>Start Workout</Text>
+                </Pressable>
+            </View>
             {activeWorkout && (
                 <Pressable onPress={() => router.push('/workout')}>
                     <Card style={s.activeCard}>
@@ -271,6 +280,10 @@ const s = StyleSheet.create({
     emptyText: { fontSize: 15, color: TEXT_SECONDARY, fontWeight: '500', textAlign: 'center' },
     emptyBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: ACCENT, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 12 },
     emptyBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+
+    actionRow: { flexDirection: 'row', gap: 12, marginHorizontal: 20, marginBottom: 20 },
+    actionBtn: { flex: 1, backgroundColor: SURFACE, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderWidth: 1, borderColor: BORDER },
+    actionBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 
     activeCard: { padding: 20, backgroundColor: SURFACE, borderColor: 'rgba(59, 130, 246, 0.3)', borderWidth: 1.5, gap: 12 },
     activeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

@@ -216,3 +216,19 @@ Do a full polish pass... Add smooth fade/slide transition... loading states... h
 - UI/UX Polish: Adjusted spacing, font weights, and color contrast across all screens to ensure a premium look on various screen sizes.
 
 ---
+
+## [2026-05-06] - Prompt
+Add 2 unique premium features to the app: Muscle Heatmap Screen and Workout Calendar...
+
+## What was done
+- **Feature 1: Muscle Heatmap Screen**
+    - Created [app/muscle-heatmap.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/muscle-heatmap.tsx) with custom SVG human body diagrams (front/back).
+    - Implemented intensity logic: Muscle groups glow electric blue based on relative training volume (weekly/all-time).
+    - Integrated with Home screen via 'Muscle Map' quick action button.
+- **Feature 2: Workout Calendar**
+    - Created [app/workout-calendar.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/workout-calendar.tsx) using `react-native-calendars`.
+    - Added streak tracking (Current and Longest) and detailed session popups for each day.
+    - Integrated with Profile screen via 'View Workout Calendar' button.
+- Technology Stack: Integrated `react-native-svg` for diagram rendering and `react-native-calendars` for session tracking.
+
+---

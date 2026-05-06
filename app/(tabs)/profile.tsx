@@ -15,7 +15,7 @@ import {
     BORDER,
 } from '@/lib/theme'
 import { TAB_BAR_CLEARANCE } from '@/components/TabBar'
-import { Dumbbell, Activity, Flame, Trophy, Settings, LogOut, User, Trash2, Users } from 'lucide-react-native'
+import { Dumbbell, Activity, Flame, Trophy, Settings, LogOut, User, Trash2, Users, Calendar } from 'lucide-react-native'
 
 const SIMULATED_USERS = [
     { id: '1', name: 'Marcus.S' },
@@ -66,7 +66,7 @@ export default function ProfileScreen() {
             // Calculate streak
             let streak = 0
             if (workouts.length > 0) {
-                const sortedWorkouts = [...workouts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                const sortedWorkouts = [...workouts].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
                 const today = new Date().setHours(0,0,0,0)
                 let lastDate = new Date(sortedWorkouts[0].date).setHours(0,0,0,0)
                 if (today - lastDate <= 86400000) {
@@ -255,6 +255,16 @@ export default function ProfileScreen() {
                         ))}
                     </Card>
                 </View>
+                {/* Progress Actions */}
+                <View style={s.section}>
+                    <Pressable style={s.calendarBtn} onPress={() => router.push('/workout-calendar')}>
+                        <View style={s.listIconText}>
+                            <Calendar size={18} color={ACCENT} />
+                            <Text style={[s.listItemText, { color: '#fff' }]}>View Workout Calendar</Text>
+                        </View>
+                        <Text style={s.chevron}>›</Text>
+                    </Pressable>
+                </View>
 
                 {/* Settings Section */}
                 <View style={s.section}>
@@ -315,6 +325,8 @@ const s = StyleSheet.create({
     logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginVertical: 10 },
     logoutText: { fontSize: 14, fontWeight: '600', color: TEXT_TERTIARY },
 
+    calendarBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: SURFACE, borderRadius: 16, borderWidth: 1, borderColor: BORDER },
+    
     miniToggle: { flexDirection: 'row', backgroundColor: SURFACE, borderRadius: 8, padding: 2, borderWidth: 1, borderColor: BORDER },
     miniTab: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
     miniTabActive: { backgroundColor: SURFACE2 },
