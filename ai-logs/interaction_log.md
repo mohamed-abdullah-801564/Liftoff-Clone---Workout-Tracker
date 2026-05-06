@@ -99,3 +99,14 @@ hey there is an error shows in terminal in index.tsx file the error is "cannot f
 - Modified [index.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/index.tsx): Added the missing `BORDER` import from the theme. This resolved the `ReferenceError` which was caused by using the variable in the styles without importing it.
 
 ---
+
+## [2026-05-06] - Prompt
+Fix these 2 issues:
+Fix 1 — Home Dashboard not updating stats: ...
+Fix 2 — Recommended For You cards layout: ...
+
+## What was done
+- Modified [index.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/index.tsx): Added detection for "In Progress" workouts by checking `current_workout_exercises` in AsyncStorage. Implemented an active workout card that appears when exercises are added, providing a shortcut to resume.
+- Modified [exercises.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/exercises.tsx): Refactored the `recCard` layout to use a row-based flex container. This prevents the `+` button from overlapping the exercise name and muscle group text, ensuring a clean and legible UI.
+
+---
