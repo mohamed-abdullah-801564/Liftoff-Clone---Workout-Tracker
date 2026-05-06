@@ -7,7 +7,7 @@
  * the screens registered here.
  */
 import { Tabs } from 'expo-router'
-import { House, Compass, Bell, CircleUser, Dumbbell } from 'lucide-react-native'
+import { House, Search, Bell, User, Users, Dumbbell } from 'lucide-react-native'
 import TabBar, { TAB_BAR_HEIGHT } from '@/components/TabBar'
 import { BG } from '@/lib/theme'
 
@@ -47,7 +47,7 @@ export default function TabsLayout() {
         options={{
           tabBarLabel: 'Exercises',
           tabBarIcon: ({ color, size }) => (
-            <Compass size={size} color={color} strokeWidth={1.6} />
+            <Search size={size} color={color} strokeWidth={1.6} />
           ),
         }}
       />
@@ -63,11 +63,21 @@ export default function TabsLayout() {
       />
 
       <Tabs.Screen
+        name="leaderboard"
+        options={{
+          tabBarLabel: 'Social',
+          tabBarIcon: ({ color, size }) => (
+            <Users size={size} color={color} strokeWidth={1.6} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
         name="profile"
         options={{
           tabBarLabel: 'Profile',
           tabBarIcon: ({ color, size }) => (
-            <CircleUser size={size} color={color} strokeWidth={1.6} />
+            <User size={size} color={color} strokeWidth={1.6} />
           ),
         }}
       />

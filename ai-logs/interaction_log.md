@@ -146,3 +146,24 @@ Using the Stitch MCP, pull the Progress Charts and Exercise Details screens... I
 - Modified [exercises.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/exercises.tsx) and [workout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/workout.tsx): Updated all exercise links to route to the new functional details screen with proper parameters.
 
 ---
+
+## [2026-05-06] - Prompt
+Using the Stitch MCP, pull the Community Leaderboard screen... Implement and make fully functional... Profile Screen with stats, PRs, and settings... Update tab layout...
+
+## What was done
+- Created [leaderboard.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/leaderboard.tsx): Implemented a competitive community hub with:
+    - Weekly/Monthly toggle for performance tracking.
+    - Simulated global rankings with 10 virtual athletes and the real user.
+    - Dynamic rank calculation based on real user's volume fetched from `AsyncStorage`.
+    - High-fidelity UI with medals (🥇🥈🥉) and blue-glow highlighting for the user's row.
+- Created [profile.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/profile.tsx): A comprehensive user center featuring:
+    - Real-time stats aggregation (Total Workouts, Volume, and Streaks).
+    - Automated PR tracking: Scans all history to display the top 5 records across all exercises.
+    - Identity management: "Edit Name" functionality persisting to `AsyncStorage`.
+    - Data hygiene: "Reset Data" option with confirmation flow to clear all local history.
+- Updated [_layout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/_layout.tsx):
+    - Added "Social" (Leaderboard) tab.
+    - Refined the Tab Bar to include all 6 core sections (Home, Workout, Exercises, Progress, Social, Profile).
+    - Updated icons to use premium `User` and `Users` variants from Lucide.
+
+---
