@@ -82,3 +82,20 @@ hey the terminal shows an error " ERROR  [ReferenceError: Property 'SURFACE3' do
 - Modified [exercises.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/exercises.tsx): Added the missing `SURFACE3` import from the theme. This resolved the `ReferenceError` which was caused by using the variable in the styles without importing it.
 
 ---
+
+## [2026-05-06] - Prompt
+Make the Home Dashboard and Exercise Library screens fully functional. ... Use AsyncStorage for all data. No Supabase needed for these screens. After completing, update ai-logs/interaction_log.md with this interaction.
+
+## What was done
+- Modified [index.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/index.tsx): Implemented real-time data fetching from AsyncStorage. Added logic to calculate workout streaks, weekly volume (with trend percentage), and load the last 3 workouts. Added a clean empty state for new users.
+- Modified [exercises.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/exercises.tsx): Integrated search and muscle group filtering with `useMemo`. Added "Recommended For You" logic that suggests exercises from different muscle groups. Implemented the `+ Add` button to save exercises to `current_workout_exercises` in AsyncStorage with confirmation alerts. Added navigation to exercise details.
+
+---
+
+## [2026-05-06] - Prompt
+hey there is an error shows in terminal in index.tsx file the error is "cannot find name border" so fix the error make sure the app runds without having any error
+
+## What was done
+- Modified [index.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/index.tsx): Added the missing `BORDER` import from the theme. This resolved the `ReferenceError` which was caused by using the variable in the styles without importing it.
+
+---

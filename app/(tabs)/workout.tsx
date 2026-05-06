@@ -151,7 +151,7 @@ const s = StyleSheet.create({
     addSetBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, marginTop: 4, borderRadius: 8, borderStyle: 'dashed', borderWidth: 1, borderColor: BORDER },
     addSetText: { fontSize: 14, color: TEXT_SECONDARY, fontWeight: '600' },
 
-    addExBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, backgroundColor: SURFACE, borderRadius: 16, borderStyle: 'dashed', borderWidth: 1, borderColor: ACCENT },
+    addExBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, backgroundColor: SURFACE, borderRadius: 16 },
     addExText: { fontSize: 16, color: ACCENT, fontWeight: '700' },
 
     bottomActions: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 20, backgroundColor: 'rgba(10,10,10,0.8)' },
