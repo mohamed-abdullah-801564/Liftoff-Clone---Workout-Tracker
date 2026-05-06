@@ -57,3 +57,28 @@ In app/(tabs)/workout.tsx, the Finish Workout button at the bottom is hidden/cut
 - Modified [workout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/workout.tsx): Increased the `paddingBottom` of the `bottomActions` container by adding `TAB_BAR_CLEARANCE`. This ensures the pinned "Finish Workout" button stays above the floating tab bar on all devices.
 
 ---
+
+## [2026-05-06] - Prompt
+In app/(tabs)/workout.tsx, there is a blue dashed border/line appearing above the Finish Workout button. Remove that dashed border completely. The Finish Workout button should just sit cleanly with normal spacing above it, no dashed outline around the Add Exercise section or button container
+
+Using the Stitch MCP, pull the Home Dashboard and Exercise Library screens from my Stitch project ID: 16627924424026582323
+Implement them exactly as React Native screens:
+File 1 — app/(tabs)/index.tsx (Home Dashboard):
+...
+File 2 — app/(tabs)/exercises.tsx (Exercise Library):
+...
+
+## What was done
+- Modified [workout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/workout.tsx): Removed the blue dashed border from the `addExBtn` style as requested.
+- Modified [index.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/index.tsx): Overhauled the Home Dashboard with a premium "Obsidian Elite" design, including a streak badge, weekly volume hero card, and glowing start button.
+- Created [exercises.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/exercises.tsx): Implemented the Exercise Library screen with a search bar, muscle group filters, 20 mock exercises, and a "Recommended For You" section.
+
+---
+
+## [2026-05-06] - Prompt
+hey the terminal shows an error " ERROR  [ReferenceError: Property 'SURFACE3' doesn't exist] ... fix the error make sure the app runs without having an error
+
+## What was done
+- Modified [exercises.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/exercises.tsx): Added the missing `SURFACE3` import from the theme. This resolved the `ReferenceError` which was caused by using the variable in the styles without importing it.
+
+---
