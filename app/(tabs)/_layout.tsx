@@ -1,13 +1,5 @@
-/**
- * Tabs layout — add new tabs by:
- *   1. Create app/(tabs)/<name>.tsx
- *   2. Add a tabBarIcon and tabBarLabel in the <Tabs.Screen> below.
- *
- * The custom TabBar renders itself — its tab list is driven entirely by
- * the screens registered here.
- */
 import { Tabs } from 'expo-router'
-import { House, Search, Bell, User, Users, Dumbbell } from 'lucide-react-native'
+import { House, Dumbbell, List, BarChart2, User } from 'lucide-react-native'
 import TabBar, { TAB_BAR_HEIGHT } from '@/components/TabBar'
 import { BG } from '@/lib/theme'
 
@@ -18,7 +10,6 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         sceneStyle: { backgroundColor: BG },
-        // Extra bottom padding so content clears the floating tab bar
         tabBarStyle: { height: TAB_BAR_HEIGHT },
       }}
     >
@@ -47,7 +38,7 @@ export default function TabsLayout() {
         options={{
           tabBarLabel: 'Exercises',
           tabBarIcon: ({ color, size }) => (
-            <Search size={size} color={color} strokeWidth={1.6} />
+            <List size={size} color={color} strokeWidth={1.6} />
           ),
         }}
       />
@@ -57,17 +48,7 @@ export default function TabsLayout() {
         options={{
           tabBarLabel: 'Progress',
           tabBarIcon: ({ color, size }) => (
-            <Bell size={size} color={color} strokeWidth={1.6} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="leaderboard"
-        options={{
-          tabBarLabel: 'Social',
-          tabBarIcon: ({ color, size }) => (
-            <Users size={size} color={color} strokeWidth={1.6} />
+            <BarChart2 size={size} color={color} strokeWidth={1.6} />
           ),
         }}
       />
@@ -81,6 +62,11 @@ export default function TabsLayout() {
           ),
         }}
       />
+
+      {/* Explicitly hide unused files if they exist in the folder */}
+      <Tabs.Screen name="activity" options={{ href: null }} />
+      <Tabs.Screen name="explore" options={{ href: null }} />
+      <Tabs.Screen name="leaderboard" options={{ href: null }} />
     </Tabs>
   )
 }

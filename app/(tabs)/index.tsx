@@ -28,12 +28,16 @@ export default function HomeScreen() {
     const [trend, setTrend] = useState(0)
     const [workouts, setWorkouts] = useState<any[]>([])
     const [activeWorkout, setActiveWorkout] = useState<any[] | null>(null)
+    const [userName, setUserName] = useState('Alex')
 
     const loadData = useCallback(async () => {
         setLoading(true)
         try {
             const data = await AsyncStorage.getItem('workouts')
             const currentEx = await AsyncStorage.getItem('current_workout_exercises')
+            const savedName = await AsyncStorage.getItem('user_name')
+
+            if (savedName) setUserName(savedName.split(' ')[0]) // Just first name for greeting
             
             const savedWorkouts = data ? JSON.parse(data) : []
             const currentList = currentEx ? JSON.parse(currentEx) : []
@@ -121,7 +125,7 @@ export default function HomeScreen() {
             {/* Header / Greeting */}
             <View style={s.header}>
                 <View>
-                    <Text style={s.greeting}>Welcome Back, Alex</Text>
+                    <Text style={s.greeting}>Welcome Back, {userName}</Text>
                     <View style={s.streakBadge}>
                         <Flame size={14} color={ACCENT} fill={ACCENT} />
                         <Text style={s.streakText}>{streak} Day Streak</Text>

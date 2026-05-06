@@ -167,3 +167,21 @@ Using the Stitch MCP, pull the Community Leaderboard screen... Implement and mak
     - Updated icons to use premium `User` and `Users` variants from Lucide.
 
 ---
+
+## [2026-05-06] - Prompt
+Fix Name not syncing to Home screen... The bottom navigation is broken and showing 8 tabs. Fix it immediately... DELETE all existing tab definitions. Replace with EXACTLY these 5 tabs... Move the leaderboard UI into the profile.tsx...
+
+## What was done
+- Modified [index.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/index.tsx):
+    - Implemented `userName` state with `AsyncStorage` persistence.
+    - Updated greeting to dynamically display the user's first name (synced with Profile settings).
+- Modified [_layout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/_layout.tsx):
+    - Completely refactored navigation to exactly 5 core tabs: **Home, Workout, Exercises, Progress, Profile**.
+    - Updated icons to requested set: `House`, `Dumbbell`, `List`, `BarChart2`, `User`.
+    - Removed all legacy and unused tabs (`activity`, `explore`, `leaderboard`, `social`).
+- Modified [profile.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/profile.tsx):
+    - Integrated the **Community Leaderboard** as a new section within the Profile screen.
+    - Added weekly volume comparison against simulated community members.
+- Cleanup: Deleted physical files for unused tabs to ensure clean routing: `activity.tsx`, `explore.tsx`, `leaderboard.tsx`.
+
+---

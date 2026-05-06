@@ -15,7 +15,15 @@ import {
     BORDER,
 } from '@/lib/theme'
 import { TAB_BAR_CLEARANCE } from '@/components/TabBar'
-import { Dumbbell, Activity, Flame, Trophy, Settings, LogOut, User, Trash2 } from 'lucide-react-native'
+import { Dumbbell, Activity, Flame, Trophy, Settings, LogOut, User, Trash2, Users } from 'lucide-react-native'
+
+const SIMULATED_USERS = [
+    { id: '1', name: 'Marcus.S' },
+    { id: '2', name: 'Alex_Riggs' },
+    { id: '3', name: 'K_Baxter' },
+    { id: '4', name: 'Sarah_Fit' },
+    { id: '5', name: 'Iron_Mike' },
+]
 
 export default function ProfileScreen() {
     const insets = useSafeAreaInsets()
@@ -27,7 +35,8 @@ export default function ProfileScreen() {
     const [stats, setStats] = useState({
         totalWorkouts: 0,
         totalVolume: 0,
-        streak: 0
+        streak: 0,
+        weeklyVolume: 0
     })
     const [prs, setPrs] = useState<any[]>([])
 
@@ -42,51 +51,42 @@ export default function ProfileScreen() {
             const totalWorkouts = workouts.length
             const totalVolume = workouts.reduce((acc: number, w: any) => acc + (w.volume || 0), 0)
             
-            // Calculate streak (simple logic: consecutive days)
+            // Weekly Volume
+            const now = new Date()
+            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1)))
+            startOfWeek.setHours(0, 0, 0, 0)
+            const weeklyVolume = workouts.filter((w: any) => new Date(w.date) >= startOfWeek).reduce((acc: number, w: any) => acc + (w.volume || 0), 0)
+
+            // Calculate streak
             let streak = 0
             if (workouts.length > 0) {
                 const sortedWorkouts = [...workouts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                const today = new Date()
-                today.setHours(0, 0, 0, 0)
-                
-                let lastDate = new Date(sortedWorkouts[0].date)
-                lastDate.setHours(0, 0, 0, 0)
-
-                const diffDays = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 3600 * 24))
-                
-                if (diffDays <= 1) {
+                const today = new Date().setHours(0,0,0,0)
+                let lastDate = new Date(sortedWorkouts[0].date).setHours(0,0,0,0)
+                if (today - lastDate <= 86400000) {
                     streak = 1
+                    let prevDate = lastDate
                     for (let i = 1; i < sortedWorkouts.length; i++) {
-                        const current = new Date(sortedWorkouts[i-1].date)
-                        current.setHours(0,0,0,0)
-                        const prev = new Date(sortedWorkouts[i].date)
-                        prev.setHours(0,0,0,0)
-                        
-                        const diff = Math.floor((current.getTime() - prev.getTime()) / (1000 * 3600 * 24))
-                        if (diff === 1) streak++
-                        else if (diff > 1) break
+                        const d = new Date(sortedWorkouts[i].date).setHours(0,0,0,0)
+                        if (prevDate - d === 86400000) { streak++; prevDate = d; }
+                        else if (prevDate - d === 0) continue
+                        else break
                     }
                 }
             }
 
-            setStats({ totalWorkouts, totalVolume, streak })
+            setStats({ totalWorkouts, totalVolume, streak, weeklyVolume })
 
             // Calculate PRs
             const prMap = new Map<string, number>()
             workouts.forEach((w: any) => {
                 w.exercises.forEach((ex: any) => {
                     const bestWeight = Math.max(...ex.sets.map((s: any) => parseFloat(s.weight) || 0))
-                    if (!prMap.has(ex.name) || bestWeight > prMap.get(ex.name)!) {
-                        prMap.set(ex.name, bestWeight)
-                    }
+                    if (!prMap.has(ex.name) || bestWeight > prMap.get(ex.name)!) prMap.set(ex.name, bestWeight)
                 })
             })
 
-            const prList = Array.from(prMap.entries())
-                .map(([name, weight]) => ({ name, weight }))
-                .sort((a, b) => b.weight - a.weight)
-                .slice(0, 5)
-            
+            const prList = Array.from(prMap.entries()).map(([name, weight]) => ({ name, weight })).sort((a, b) => b.weight - a.weight).slice(0, 5)
             setPrs(prList)
 
         } catch (e) {
@@ -96,11 +96,17 @@ export default function ProfileScreen() {
         }
     }, [])
 
-    useFocusEffect(
-        useCallback(() => {
-            loadData()
-        }, [loadData])
-    )
+    useFocusEffect(useCallback(() => { loadData() }, [loadData]))
+
+    const leaderboardData = useMemo(() => {
+        const entries = SIMULATED_USERS.map(u => ({
+            id: u.id,
+            name: u.name,
+            volume: Math.floor(15000 + (parseInt(u.id) * 1200) + Math.random() * 500)
+        }))
+        entries.push({ id: 'me', name: userName, volume: stats.weeklyVolume })
+        return entries.sort((a, b) => b.volume - a.volume)
+    }, [userName, stats.weeklyVolume])
 
     const handleSaveName = async () => {
         if (!tempName.trim()) return
@@ -110,37 +116,25 @@ export default function ProfileScreen() {
     }
 
     const handleResetData = () => {
-        Alert.alert(
-            "Reset All Data?",
-            "This will permanently delete your workout history, PRs, and settings. This action cannot be undone.",
-            [
-                { text: "Cancel", style: "cancel" },
-                { 
-                    text: "Reset", 
-                    style: "destructive",
-                    onPress: async () => {
-                        await AsyncStorage.clear()
-                        setUserName('Alex Riggs')
-                        setStats({ totalWorkouts: 0, totalVolume: 0, streak: 0 })
-                        setPrs([])
-                        router.replace('/')
-                    }
-                }
-            ]
-        )
+        Alert.alert("Reset All Data?", "This will permanently delete your workout history, PRs, and settings.", [
+            { text: "Cancel", style: "cancel" },
+            { text: "Reset", style: "destructive", onPress: async () => {
+                await AsyncStorage.clear()
+                setUserName('Alex Riggs')
+                setStats({ totalWorkouts: 0, totalVolume: 0, streak: 0, weeklyVolume: 0 })
+                setPrs([])
+                router.replace('/')
+            }}
+        ])
     }
 
-    const getInitials = (name: string) => {
-        return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
-    }
+    const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
 
-    if (loading) {
-        return (
-            <View style={{ flex: 1, backgroundColor: BG, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator color={ACCENT} size="large" />
-            </View>
-        )
-    }
+    if (loading) return (
+        <View style={{ flex: 1, backgroundColor: BG, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator color={ACCENT} size="large" />
+        </View>
+    )
 
     return (
         <View style={{ flex: 1, backgroundColor: BG }}>
@@ -175,7 +169,7 @@ export default function ProfileScreen() {
                     ) : (
                         <Pressable onPress={() => { setTempName(userName); setIsEditingName(true); }} style={s.nameWrap}>
                             <Text style={s.profileName}>{userName}</Text>
-                            <Text style={s.profileSub}>Lifter since 2026</Text>
+                            <Text style={s.profileSub}>Elite Athlete</Text>
                         </Pressable>
                     )}
                 </View>
@@ -195,7 +189,26 @@ export default function ProfileScreen() {
                     <Card style={s.statBox}>
                         <Flame size={20} color="#f59e0b" />
                         <Text style={s.statVal}>{stats.streak}</Text>
-                        <Text style={s.statLabel}>Day Streak</Text>
+                        <Text style={s.statLabel}>Streak</Text>
+                    </Card>
+                </View>
+
+                {/* Leaderboard Section */}
+                <View style={s.section}>
+                    <View style={s.sectionHeader}>
+                        <Users size={18} color={ACCENT} />
+                        <Text style={s.sectionTitle}>COMMUNITY RANKINGS (WEEKLY)</Text>
+                    </View>
+                    <Card style={s.listCard}>
+                        {leaderboardData.map((user, index) => (
+                            <View key={user.id} style={[s.listItem, index < leaderboardData.length - 1 && s.borderBottom, user.id === 'me' && s.rowMe]}>
+                                <View style={s.listIconText}>
+                                    <Text style={s.rankText}>{index + 1}</Text>
+                                    <Text style={[s.listItemText, user.id === 'me' && { color: ACCENT }]}>{user.id === 'me' ? 'You' : user.name}</Text>
+                                </View>
+                                <Text style={s.listItemVal}>{(user.volume / 1000).toFixed(1)}k kg</Text>
+                            </View>
+                        ))}
                     </Card>
                 </View>
 
@@ -203,19 +216,15 @@ export default function ProfileScreen() {
                 <View style={s.section}>
                     <View style={s.sectionHeader}>
                         <Trophy size={18} color="#f59e0b" />
-                        <Text style={s.sectionTitle}>RECENT PERSONAL RECORDS</Text>
+                        <Text style={s.sectionTitle}>TOP PERSONAL RECORDS</Text>
                     </View>
                     <Card style={s.listCard}>
-                        {prs.length === 0 ? (
-                            <Text style={s.emptyText}>Complete exercises to set PRs!</Text>
-                        ) : (
-                            prs.map((pr, index) => (
-                                <View key={pr.name} style={[s.listItem, index < prs.length - 1 && s.borderBottom]}>
-                                    <Text style={s.listItemName}>{pr.name}</Text>
-                                    <Text style={s.listItemVal}>{pr.weight} kg</Text>
-                                </View>
-                            ))
-                        )}
+                        {prs.length === 0 ? <Text style={s.emptyText}>No records yet.</Text> : prs.map((pr, index) => (
+                            <View key={pr.name} style={[s.listItem, index < prs.length - 1 && s.borderBottom]}>
+                                <Text style={s.listItemName}>{pr.name}</Text>
+                                <Text style={s.listItemVal}>{pr.weight} kg</Text>
+                            </View>
+                        ))}
                     </Card>
                 </View>
 
@@ -226,24 +235,12 @@ export default function ProfileScreen() {
                         <Text style={s.sectionTitle}>SETTINGS</Text>
                     </View>
                     <Card style={s.listCard}>
-                        <Pressable 
-                            style={[s.listItem, s.borderBottom]}
-                            onPress={() => { setTempName(userName); setIsEditingName(true); }}
-                        >
-                            <View style={s.listIconText}>
-                                <User size={18} color={TEXT_SECONDARY} />
-                                <Text style={s.listItemText}>Edit Name</Text>
-                            </View>
+                        <Pressable style={[s.listItem, s.borderBottom]} onPress={() => { setTempName(userName); setIsEditingName(true); }}>
+                            <View style={s.listIconText}><User size={18} color={TEXT_SECONDARY} /><Text style={s.listItemText}>Edit Name</Text></View>
                             <Text style={s.chevron}>›</Text>
                         </Pressable>
-                        <Pressable 
-                            style={s.listItem}
-                            onPress={handleResetData}
-                        >
-                            <View style={s.listIconText}>
-                                <Trash2 size={18} color="#ef4444" />
-                                <Text style={[s.listItemText, { color: '#ef4444' }]}>Reset Data</Text>
-                            </View>
+                        <Pressable style={s.listItem} onPress={handleResetData}>
+                            <View style={s.listIconText}><Trash2 size={18} color="#ef4444" /><Text style={[s.listItemText, { color: '#ef4444' }]}>Reset All Data</Text></View>
                         </Pressable>
                     </Card>
                 </View>
@@ -252,46 +249,41 @@ export default function ProfileScreen() {
                     <LogOut size={18} color={TEXT_TERTIARY} />
                     <Text style={s.logoutText}>Log Out</Text>
                 </Pressable>
-
             </ScrollView>
         </View>
     )
 }
 
 const s = StyleSheet.create({
-    profileHeader: { alignItems: 'center', marginBottom: 30 },
-    avatarLarge: { width: 90, height: 90, borderRadius: 45, backgroundColor: SURFACE, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: BORDER, position: 'relative' },
-    avatarLargeText: { fontSize: 32, fontWeight: '800', color: '#fff' },
-    editAvatar: { position: 'absolute', bottom: 0, right: 0, backgroundColor: ACCENT, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: BG },
-    
-    nameWrap: { alignItems: 'center', marginTop: 16 },
-    profileName: { fontSize: 24, fontWeight: '800', color: '#fff' },
-    profileSub: { fontSize: 14, color: TEXT_TERTIARY, marginTop: 4 },
-
-    editNameRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16, paddingHorizontal: 40 },
-    nameInput: { flex: 1, backgroundColor: SURFACE, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10, color: '#fff', fontSize: 16, borderWidth: 1, borderColor: BORDER },
-    saveBtn: { backgroundColor: ACCENT, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 },
+    profileHeader: { alignItems: 'center', marginBottom: 24 },
+    avatarLarge: { width: 80, height: 80, borderRadius: 40, backgroundColor: SURFACE, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: BORDER, position: 'relative' },
+    avatarLargeText: { fontSize: 28, fontWeight: '800', color: '#fff' },
+    editAvatar: { position: 'absolute', bottom: 0, right: 0, backgroundColor: ACCENT, width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: BG },
+    nameWrap: { alignItems: 'center', marginTop: 12 },
+    profileName: { fontSize: 22, fontWeight: '800', color: '#fff' },
+    profileSub: { fontSize: 13, color: TEXT_TERTIARY, marginTop: 4 },
+    editNameRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12, paddingHorizontal: 40 },
+    nameInput: { flex: 1, backgroundColor: SURFACE, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8, color: '#fff', fontSize: 15, borderWidth: 1, borderColor: BORDER },
+    saveBtn: { backgroundColor: ACCENT, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
     saveBtnText: { color: '#fff', fontWeight: '700' },
-
-    statsGrid: { flexDirection: 'row', paddingHorizontal: 20, gap: 12, marginBottom: 30 },
+    statsGrid: { flexDirection: 'row', paddingHorizontal: 20, gap: 12, marginBottom: 24 },
     statBox: { flex: 1, padding: 16, alignItems: 'center', gap: 6 },
-    statVal: { fontSize: 20, fontWeight: '800', color: '#fff' },
-    statLabel: { fontSize: 11, color: TEXT_TERTIARY, fontWeight: '700', textTransform: 'uppercase' },
-
-    section: { paddingHorizontal: 20, marginBottom: 24 },
-    sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-    sectionTitle: { fontSize: 12, fontWeight: '800', color: TEXT_TERTIARY, letterSpacing: 1 },
-
-    listCard: { paddingVertical: 4 },
-    listItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 },
+    statVal: { fontSize: 18, fontWeight: '800', color: '#fff' },
+    statLabel: { fontSize: 10, color: TEXT_TERTIARY, fontWeight: '700', textTransform: 'uppercase' },
+    section: { paddingHorizontal: 20, marginBottom: 20 },
+    sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+    sectionTitle: { fontSize: 11, fontWeight: '800', color: TEXT_TERTIARY, letterSpacing: 1 },
+    listCard: { paddingVertical: 2 },
+    listItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14 },
+    rowMe: { backgroundColor: 'rgba(59, 130, 246, 0.05)' },
     borderBottom: { borderBottomWidth: 1, borderBottomColor: BORDER },
-    listIconText: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    listItemText: { fontSize: 15, fontWeight: '600', color: '#fff' },
-    listItemName: { fontSize: 15, fontWeight: '600', color: '#fff' },
-    listItemVal: { fontSize: 15, fontWeight: '700', color: ACCENT },
-    chevron: { fontSize: 20, color: TEXT_TERTIARY, marginTop: -4 },
-    emptyText: { padding: 20, textAlign: 'center', color: TEXT_TERTIARY, fontSize: 14 },
-
-    logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginVertical: 20 },
-    logoutText: { fontSize: 15, fontWeight: '600', color: TEXT_TERTIARY },
+    listIconText: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    rankText: { fontSize: 13, fontWeight: '800', color: TEXT_TERTIARY, width: 20 },
+    listItemText: { fontSize: 14, fontWeight: '600', color: '#fff' },
+    listItemName: { fontSize: 14, fontWeight: '600', color: '#fff' },
+    listItemVal: { fontSize: 14, fontWeight: '700', color: ACCENT },
+    chevron: { fontSize: 18, color: TEXT_TERTIARY, marginTop: -2 },
+    emptyText: { padding: 16, textAlign: 'center', color: TEXT_TERTIARY, fontSize: 13 },
+    logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginVertical: 10 },
+    logoutText: { fontSize: 14, fontWeight: '600', color: TEXT_TERTIARY },
 })
