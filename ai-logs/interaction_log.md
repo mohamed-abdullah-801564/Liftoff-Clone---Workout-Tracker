@@ -110,3 +110,19 @@ Fix 2 — Recommended For You cards layout: ...
 - Modified [exercises.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/exercises.tsx): Refactored the `recCard` layout to use a row-based flex container. This prevents the `+` button from overlapping the exercise name and muscle group text, ensuring a clean and legible UI.
 
 ---
+
+## [2026-05-06] - Prompt
+Fix these 3 issues in the workout screen and navigation:
+Fix 1 — Make Add Set button functional ...
+Fix 2 — Make Finish Workout button functional ...
+Fix 3 — Add missing Exercise Library tab icon ...
+
+## What was done
+- Modified [_layout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/_layout.tsx): Updated tab navigation to include the "Exercises" tab, replacing "Explore" to align with the 5 requested tabs (Home, Workout, Exercises, Activity, Profile).
+- Modified [workout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/workout.tsx): 
+    - Implemented `useState` to manage exercises and sets dynamically.
+    - Built the `addSet` logic to create new rows with auto-incrementing numbers and inherited weight/reps.
+    - Replaced static text with `TextInput` (numeric keyboard) for weight and reps to make them editable.
+    - Implemented `finishWorkout` which calculates total volume, saves the session to `AsyncStorage['workouts']`, clears the current progress, and navigates back home.
+
+---

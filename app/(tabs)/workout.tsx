@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import { View, ScrollView, StyleSheet, Pressable } from 'react-native'
-import { router } from 'expo-router'
+import { useState, useEffect, useCallback } from 'react'
+import { View, ScrollView, StyleSheet, Pressable, TextInput, Alert, ActivityIndicator } from 'react-native'
+import { router, useFocusEffect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Text } from '@/components/ui/Text'
 import { Card } from '@/components/ui/Card'
 import {
@@ -19,19 +20,127 @@ import { Check, Plus, X, Timer, ChevronLeft } from 'lucide-react-native'
 
 export default function WorkoutScreen() {
     const insets = useSafeAreaInsets()
+    const [loading, setLoading] = useState(true)
     const [timer, setTimer] = useState('01:24')
+    const [workoutName, setWorkoutName] = useState('New Workout')
+    const [exercises, setExercises] = useState<any[]>([])
 
-    const exercises = [
-        {
-            id: '1',
-            name: 'Bench Press (Barbell)',
-            sets: [
-                { id: '1-1', weight: 80, reps: 8, status: 'completed' },
-                { id: '1-2', weight: 80, reps: 8, status: 'completed' },
-                { id: '1-3', weight: 85, reps: 6, status: 'active' },
-            ]
+    const loadWorkout = useCallback(async () => {
+        try {
+            const data = await AsyncStorage.getItem('current_workout_exercises')
+            if (data) {
+                const list = JSON.parse(data)
+                // Ensure every exercise has a sets array
+                setExercises(list.map((ex: any) => ({
+                    ...ex,
+                    sets: ex.sets || [{ id: Date.now() + Math.random(), weight: '', reps: '', status: 'active' }]
+                })))
+            }
+        } catch (e) {
+            console.error(e)
+        } finally {
+            setLoading(false)
         }
-    ]
+    }, [])
+
+    useEffect(() => {
+        loadWorkout()
+    }, [loadWorkout])
+
+    const updateSet = (exId: string, setId: string, fields: any) => {
+        setExercises(prev => prev.map(ex => {
+            if (ex.id !== exId && ex.instanceId !== exId) return ex
+            return {
+                ...ex,
+                sets: ex.sets.map((s: any) => s.id === setId ? { ...s, ...fields } : s)
+            }
+        }))
+    }
+
+    const addSet = (exId: string) => {
+        setExercises(prev => prev.map(ex => {
+            if (ex.id !== exId && ex.instanceId !== exId) return ex
+            const lastSet = ex.sets[ex.sets.length - 1]
+            return {
+                ...ex,
+                sets: [...ex.sets, { 
+                    id: Date.now(), 
+                    weight: lastSet?.weight || '', 
+                    reps: lastSet?.reps || '', 
+                    status: 'active' 
+                }]
+            }
+        }))
+    }
+
+    const removeExercise = (id: string) => {
+        setExercises(prev => prev.filter(ex => ex.id !== id && ex.instanceId !== id))
+    }
+
+    const toggleSetStatus = (exId: string, setId: string) => {
+        setExercises(prev => prev.map(ex => {
+            if (ex.id !== exId && ex.instanceId !== exId) return ex
+            return {
+                ...ex,
+                sets: ex.sets.map((s: any) => {
+                    if (s.id === setId) {
+                        return { ...s, status: s.status === 'completed' ? 'active' : 'completed' }
+                    }
+                    return s
+                })
+            }
+        }))
+    }
+
+    const finishWorkout = async () => {
+        if (exercises.length === 0) {
+            Alert.alert('Empty Workout', 'Add some exercises before finishing!')
+            return
+        }
+
+        try {
+            let totalVolume = 0
+            let totalSets = 0
+            
+            const processedExercises = exercises.map(ex => {
+                const completedSets = ex.sets.filter((s: any) => s.status === 'completed')
+                const vol = completedSets.reduce((acc: number, s: any) => acc + (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 0), 0)
+                totalVolume += vol
+                totalSets += completedSets.length
+                return { ...ex, volume: vol, completedSets: completedSets.length }
+            })
+
+            const workoutObj = {
+                id: Date.now().toString(),
+                name: workoutName,
+                date: new Date().toISOString(),
+                duration: '42:15', // Mock duration for now
+                volume: totalVolume,
+                totalSets,
+                exercises: processedExercises
+            }
+
+            const existing = await AsyncStorage.getItem('workouts')
+            const list = existing ? JSON.parse(existing) : []
+            list.push(workoutObj)
+            
+            await AsyncStorage.setItem('workouts', JSON.stringify(list))
+            await AsyncStorage.removeItem('current_workout_exercises')
+            
+            Alert.alert('Workout Complete! 💪', `Total Volume: ${totalVolume.toLocaleString()} kg`)
+            router.replace('/(tabs)')
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
+    if (loading) {
+        return (
+            <View style={{ flex: 1, backgroundColor: BG, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator color={ACCENT} size="large" />
+            </View>
+        )
+    }
 
     return (
         <View style={{ flex: 1, backgroundColor: BG }}>
@@ -41,17 +150,23 @@ export default function WorkoutScreen() {
                     <ChevronLeft size={24} color="#fff" />
                 </Pressable>
                 <View style={{ flex: 1, alignItems: 'center' }}>
-                    <Text style={s.workoutTitle}>Upper Body A</Text>
+                    <TextInput 
+                        style={s.workoutTitle} 
+                        value={workoutName}
+                        onChangeText={setWorkoutName}
+                        placeholder="Workout Name"
+                        placeholderTextColor={TEXT_TERTIARY}
+                    />
                     <Text style={s.workoutTime}>00:42:15</Text>
                 </View>
-                <Pressable style={s.finishBtnSmall}>
+                <Pressable style={s.finishBtnSmall} onPress={finishWorkout}>
                     <Text style={s.finishTextSmall}>Finish</Text>
                 </Pressable>
             </View>
 
             <ScrollView
                 style={{ flex: 1 }}
-                contentContainerStyle={[s.container, { paddingBottom: insets.bottom + 100 }]}
+                contentContainerStyle={[s.container, { paddingBottom: insets.bottom + 140 }]}
                 showsVerticalScrollIndicator={false}
             >
                 {/* Rest Timer UI */}
@@ -62,19 +177,20 @@ export default function WorkoutScreen() {
                             <Text style={s.timerValue}>{timer}</Text>
                             <Text style={s.timerLabel}>Rest Timer</Text>
                         </View>
-                        {/* Circular Progress Placeholder */}
                         <View style={s.timerProgress} />
                     </View>
                 </View>
 
                 {/* Exercises */}
                 {exercises.map((ex) => (
-                    <Card key={ex.id} style={s.exCard}>
+                    <Card key={ex.instanceId || ex.id} style={s.exCard}>
                         <View style={s.exHeader}>
-                            <Pressable onPress={() => router.push(`/exercise/${ex.id}`)}>
+                            <Pressable onPress={() => router.push(`/exercise/${ex.id}`)} style={{ flex: 1 }}>
                                 <Text style={s.exName}>{ex.name}</Text>
                             </Pressable>
-                            <X size={20} color={TEXT_TERTIARY} />
+                            <Pressable onPress={() => removeExercise(ex.instanceId || ex.id)}>
+                                <X size={20} color={TEXT_TERTIARY} />
+                            </Pressable>
                         </View>
 
                         {/* Table Header */}
@@ -86,25 +202,46 @@ export default function WorkoutScreen() {
                         </View>
 
                         {/* Table Body */}
-                        {ex.sets.map((set, i) => (
+                        {ex.sets.map((set: any, i: number) => (
                             <View key={set.id} style={[s.tableRow, set.status === 'active' && s.activeRow]}>
                                 <View style={{ flex: 1 }}><Text style={s.cellText}>{i + 1}</Text></View>
-                                <View style={{ flex: 2 }}><Text style={s.cellText}>{set.weight}</Text></View>
-                                <View style={{ flex: 2 }}><Text style={s.cellText}>{set.reps}</Text></View>
-                                <Pressable style={[s.checkBtn, set.status === 'completed' && s.checkBtnDone]}>
+                                <View style={{ flex: 2 }}>
+                                    <TextInput 
+                                        style={s.cellInput}
+                                        value={set.weight.toString()}
+                                        onChangeText={(val) => updateSet(ex.instanceId || ex.id, set.id, { weight: val })}
+                                        keyboardType="numeric"
+                                        placeholder="0"
+                                        placeholderTextColor={TEXT_TERTIARY}
+                                    />
+                                </View>
+                                <View style={{ flex: 2 }}>
+                                    <TextInput 
+                                        style={s.cellInput}
+                                        value={set.reps.toString()}
+                                        onChangeText={(val) => updateSet(ex.instanceId || ex.id, set.id, { reps: val })}
+                                        keyboardType="numeric"
+                                        placeholder="0"
+                                        placeholderTextColor={TEXT_TERTIARY}
+                                    />
+                                </View>
+                                <Pressable 
+                                    style={[s.checkBtn, set.status === 'completed' && s.checkBtnDone]}
+                                    onPress={() => toggleSetStatus(ex.instanceId || ex.id, set.id)}
+                                >
                                     <Check size={18} color={set.status === 'completed' ? '#fff' : TEXT_TERTIARY} />
                                 </Pressable>
                             </View>
                         ))}
 
-                        <Pressable style={s.addSetBtn}>
+                        <Pressable style={s.addSetBtn} onPress={() => addSet(ex.instanceId || ex.id)}>
                             <Plus size={16} color={TEXT_SECONDARY} />
                             <Text style={s.addSetText}>Add Set</Text>
                         </Pressable>
                     </Card>
                 ))}
 
-                <Pressable style={s.addExBtn}>
+                <Pressable style={s.addExBtn} onPress={() => router.push('/exercises')}>
                     <Plus size={20} color={ACCENT} />
                     <Text style={s.addExText}>Add Exercise</Text>
                 </Pressable>
@@ -112,7 +249,7 @@ export default function WorkoutScreen() {
 
             {/* Bottom Actions */}
             <View style={[s.bottomActions, { paddingBottom: insets.bottom + TAB_BAR_CLEARANCE + 10 }]}>
-                <Pressable style={s.finishBtnLarge}>
+                <Pressable style={s.finishBtnLarge} onPress={finishWorkout}>
                     <Text style={s.finishBtnText}>Finish Workout</Text>
                     <View style={s.finishBtnGlow} />
                 </Pressable>
@@ -145,6 +282,7 @@ const s = StyleSheet.create({
     tableHead: { fontSize: 11, fontWeight: '700', color: TEXT_TERTIARY, letterSpacing: 0.5 },
     activeRow: { backgroundColor: 'rgba(59,130,246,0.08)' },
     cellText: { fontSize: 16, color: '#fff', fontWeight: '600' },
+    cellInput: { fontSize: 16, color: '#fff', fontWeight: '600', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 4, paddingHorizontal: 8, paddingVertical: 4 },
     checkBtn: { width: 44, height: 32, borderRadius: 8, backgroundColor: SURFACE2, alignItems: 'center', justifyContent: 'center' },
     checkBtnDone: { backgroundColor: '#22c55e' },
 
