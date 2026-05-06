@@ -126,3 +126,23 @@ Fix 3 — Add missing Exercise Library tab icon ...
     - Implemented `finishWorkout` which calculates total volume, saves the session to `AsyncStorage['workouts']`, clears the current progress, and navigates back home.
 
 ---
+
+## [2026-05-06] - Prompt
+Using the Stitch MCP, pull the Progress Charts and Exercise Details screens... Implement and make them fully functional... Read all data from completed_workouts in AsyncStorage...
+
+## What was done
+- Installed `react-native-chart-kit` for data visualization.
+- Created [progress.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/progress.tsx): Implemented a dynamic progress dashboard with:
+    - An exercise selector populated from workout history.
+    - A `LineChart` showing weight progression over time for specific exercises.
+    - A `BarChart` for weekly volume tracking.
+    - Automated stat calculation (Best Weight, Total Sets, Volume).
+- Created [exercise-details.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/exercise-details.tsx): A deep-dive screen for individual exercises featuring:
+    - Performance charts and PR tracking (Max Weight/Reps).
+    - Hardcoded expert descriptions for core movements.
+    - Recent session history (last 5 logs).
+    - A "+ Log New Session" shortcut.
+- Modified [_layout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/_layout.tsx): Renamed "Activity" tab to "Progress" to match the new charts feature.
+- Modified [exercises.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/exercises.tsx) and [workout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/workout.tsx): Updated all exercise links to route to the new functional details screen with proper parameters.
+
+---

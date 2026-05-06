@@ -185,7 +185,7 @@ export default function WorkoutScreen() {
                 {exercises.map((ex) => (
                     <Card key={ex.instanceId || ex.id} style={s.exCard}>
                         <View style={s.exHeader}>
-                            <Pressable onPress={() => router.push(`/exercise/${ex.id}`)} style={{ flex: 1 }}>
+                            <Pressable onPress={() => router.push({ pathname: '/exercise-details', params: { id: ex.id, name: ex.name } })} style={{ flex: 1 }}>
                                 <Text style={s.exName}>{ex.name}</Text>
                             </Pressable>
                             <Pressable onPress={() => removeExercise(ex.instanceId || ex.id)}>

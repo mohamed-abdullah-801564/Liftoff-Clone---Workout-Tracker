@@ -53,9 +53,9 @@ export default function TabsLayout() {
       />
 
       <Tabs.Screen
-        name="activity"
+        name="progress"
         options={{
-          tabBarLabel: 'Activity',
+          tabBarLabel: 'Progress',
           tabBarIcon: ({ color, size }) => (
             <Bell size={size} color={color} strokeWidth={1.6} />
           ),

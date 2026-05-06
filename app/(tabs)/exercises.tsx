@@ -168,7 +168,7 @@ export default function ExercisesScreen() {
                     {filteredExercises.map((ex) => (
                         <Pressable 
                             key={ex.id} 
-                            onPress={() => router.push(`/exercise/${ex.id}`)}
+                            onPress={() => router.push({ pathname: '/exercise-details', params: { id: ex.id, name: ex.name } })}
                         >
                             <Card style={s.exCard}>
                                 <View style={s.exImagePlaceholder}>
