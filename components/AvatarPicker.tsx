@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { View, StyleSheet, Pressable, Modal, Dimensions, Image } from 'react-native'
+import { View, StyleSheet, Pressable, Modal, Dimensions } from 'react-native'
+import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Text } from '@/components/ui/Text'
@@ -9,11 +10,11 @@ import { Camera, X } from 'lucide-react-native'
 const { height } = Dimensions.get('window')
 
 export const DEFAULT_AVATARS = [
-    { id: 'av1', symbol: '⚡', bg: '#eab308' },
-    { id: 'av2', symbol: '🔥', bg: '#ef4444' },
-    { id: 'av3', symbol: '💪', bg: '#3b82f6' },
-    { id: 'av4', symbol: '🏆', bg: '#f59e0b' },
-    { id: 'av5', symbol: '🎯', bg: '#10b981' },
+    { id: 'av1', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix' },
+    { id: 'av2', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka' },
+    { id: 'av3', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Max' },
+    { id: 'av4', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Luna' },
+    { id: 'av5', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Kai' },
 ]
 
 interface AvatarPickerProps {
@@ -25,7 +26,7 @@ interface AvatarPickerProps {
 export function AvatarPicker({ visible, onClose, onSelect }: AvatarPickerProps) {
     const handlePickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [1, 1],
             quality: 0.8,
@@ -63,22 +64,26 @@ export function AvatarPicker({ visible, onClose, onSelect }: AvatarPickerProps) 
                             <Camera size={24} color={ACCENT} />
                         </View>
                         <View style={{ flex: 1 }}>
-                            <Text style={s.uploadText}>Upload from Gallery</Text>
-                            <Text style={s.uploadSub}>Choose a photo from your device</Text>
+                            <Text style={s.uploadText}>Upload your photo</Text>
+                            <Text style={s.uploadSub}>Select a clear photo of yourself</Text>
                         </View>
                     </Pressable>
 
                     <View style={s.divider} />
-                    <Text style={s.defaultTitle}>Or pick a default avatar</Text>
+                    <Text style={s.defaultTitle}>Or pick a default character</Text>
                     
                     <View style={s.defaultGrid}>
                         {DEFAULT_AVATARS.map((av) => (
                             <Pressable 
                                 key={av.id} 
-                                style={[s.defaultAv, { backgroundColor: av.bg }]}
+                                style={s.defaultAv}
                                 onPress={() => handleSelectDefault(av)}
                             >
-                                <Text style={s.avSymbol}>{av.symbol}</Text>
+                                <Image 
+                                    source={{ uri: av.url }} 
+                                    style={s.avImage}
+                                    contentFit="contain"
+                                />
                             </Pressable>
                         ))}
                     </View>
@@ -97,19 +102,22 @@ export function AvatarDisplay({ avatar, size = 44, fallbackText = '?' }: { avata
         )
     }
 
-    if (avatar.type === 'image') {
-        return <Image source={{ uri: avatar.uri }} style={{ width: size, height: size, borderRadius: size / 2, borderWidth: 1, borderColor: BORDER }} />
-    }
+    const uri = avatar.type === 'image' ? avatar.uri : avatar.url
 
-    if (avatar.type === 'default') {
-        return (
-            <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: avatar.bg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: BORDER }}>
-                <Text style={{ fontSize: size * 0.5 }}>{avatar.symbol}</Text>
-            </View>
-        )
-    }
-
-    return null
+    return (
+        <Image 
+            source={{ uri }} 
+            style={{ 
+                width: size, 
+                height: size, 
+                borderRadius: size / 2, 
+                borderWidth: 1, 
+                borderColor: BORDER,
+                backgroundColor: avatar.type === 'default' ? SURFACE2 : 'transparent'
+            }} 
+            contentFit="cover"
+        />
+    )
 }
 
 const s = StyleSheet.create({
@@ -126,7 +134,8 @@ const s = StyleSheet.create({
     divider: { height: 1, backgroundColor: BORDER, marginVertical: 24 },
     defaultTitle: { fontSize: 14, fontWeight: '600', color: TEXT_SECONDARY, marginBottom: 16 },
     defaultGrid: { flexDirection: 'row', justifyContent: 'space-between' },
-    defaultAv: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,0.1)' },
-    avSymbol: { fontSize: 24 },
+    defaultAv: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: SURFACE2, overflow: 'hidden' },
+    avImage: { width: '100%', height: '100%' },
     display: { backgroundColor: SURFACE2, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: BORDER }
 })
+
