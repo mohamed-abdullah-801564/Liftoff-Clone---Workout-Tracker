@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { View, ScrollView, StyleSheet, Pressable, TextInput, Alert, ActivityIndicator, Animated, Dimensions } from 'react-native'
+import { View, ScrollView, StyleSheet, Pressable, TextInput, ActivityIndicator, Animated, Dimensions } from 'react-native'
 import { router, useFocusEffect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as Haptics from 'expo-haptics'
 import { Text } from '@/components/ui/Text'
 import { Card } from '@/components/ui/Card'
+import { Toast, ToastHandle } from '@/components/Toast'
+import { useRef } from 'react'
 import {
     ACCENT,
     BG,
@@ -23,11 +25,13 @@ const { width, height } = Dimensions.get('window')
 
 export default function WorkoutScreen() {
     const insets = useSafeAreaInsets()
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState(false)
+    const [secondsElapsed, setSecondsElapsed] = useState(0)
     const [timer, setTimer] = useState('01:24')
     const [workoutName, setWorkoutName] = useState('')
     const [exercises, setExercises] = useState<any[]>([])
     const [previousPRs, setPreviousPRs] = useState<Record<string, number>>({})
+    const toastRef = useRef<ToastHandle>(null)
     
     // PR Celebration Animation
     const prAnim = useState(new Animated.Value(0))[0]
@@ -56,10 +60,25 @@ export default function WorkoutScreen() {
                     sets: ex.sets || [{ id: Date.now() + Math.random(), weight: '', reps: '', status: 'active' }]
                 })))
             }
-        } finally {
-            setLoading(false)
+        } catch (e) {
+            console.error(e)
         }
     }, [])
+
+    // Timer Logic
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setSecondsElapsed(prev => prev + 1)
+        }, 1000)
+        return () => clearInterval(interval)
+    }, [])
+
+    const formatDuration = (seconds: number) => {
+        const h = Math.floor(seconds / 3600)
+        const m = Math.floor((seconds % 3600) / 60)
+        const s = seconds % 60
+        return [h, m, s].map(v => v < 10 ? '0' + v : v).join(':')
+    }
 
     useFocusEffect(
         useCallback(() => {
@@ -149,7 +168,7 @@ export default function WorkoutScreen() {
 
     const finishWorkout = async () => {
         if (exercises.length === 0) {
-            Alert.alert('Empty Workout', 'Add some exercises before finishing!')
+            toastRef.current?.show('Add some exercises before finishing!')
             return
         }
 
@@ -173,7 +192,7 @@ export default function WorkoutScreen() {
                 id: Date.now().toString(),
                 name: finalName,
                 date: now.toISOString(),
-                duration: '42:15',
+                duration: formatDuration(secondsElapsed),
                 volume: totalVolume,
                 totalSets,
                 exercises: processedExercises
@@ -186,21 +205,20 @@ export default function WorkoutScreen() {
             await AsyncStorage.setItem('workouts', JSON.stringify(list))
             await AsyncStorage.removeItem('current_workout_exercises')
             
+            // Reset state
+            setExercises([])
+            setWorkoutName('')
+            setSecondsElapsed(0)
+            
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-            Alert.alert('Workout Complete! 💪', `Total Volume: ${totalVolume.toLocaleString()} kg`)
-            router.replace('/(tabs)')
+            toastRef.current?.show(`Workout Complete! Total Volume: ${totalVolume.toLocaleString()} kg`)
+            setTimeout(() => router.replace('/(tabs)'), 1000)
         } catch (e) {
             console.error(e)
         }
     }
 
-    if (loading) {
-        return (
-            <View style={{ flex: 1, backgroundColor: BG, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator color={ACCENT} size="large" />
-            </View>
-        )
-    }
+
 
     return (
         <View style={{ flex: 1, backgroundColor: BG }}>
@@ -226,7 +244,7 @@ export default function WorkoutScreen() {
                         placeholder={`Workout — ${new Date().toLocaleDateString([], { month: 'short', day: 'numeric' })}`}
                         placeholderTextColor={TEXT_TERTIARY}
                     />
-                    <Text style={s.workoutTime}>00:42:15</Text>
+                    <Text style={s.workoutTime}>{formatDuration(secondsElapsed)}</Text>
                 </View>
                 <Pressable style={s.finishBtnSmall} onPress={finishWorkout}>
                     <Text style={s.finishTextSmall}>Finish</Text>
@@ -319,6 +337,8 @@ export default function WorkoutScreen() {
                     <Text style={s.finishBtnText}>Finish Workout</Text>
                 </Pressable>
             </View>
+
+            <Toast ref={toastRef} />
         </View>
     )
 }

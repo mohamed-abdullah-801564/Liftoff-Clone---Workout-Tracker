@@ -105,13 +105,7 @@ export default function ExerciseDetailsScreen() {
         }
     }, [exerciseId, exerciseName, workouts])
 
-    if (loading) {
-        return (
-            <View style={{ flex: 1, backgroundColor: BG, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator color={ACCENT} size="large" />
-            </View>
-        )
-    }
+
 
     return (
         <View style={{ flex: 1, backgroundColor: BG }}>

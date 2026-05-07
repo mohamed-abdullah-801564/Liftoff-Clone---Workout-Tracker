@@ -1,6 +1,9 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import { View, ScrollView, StyleSheet, Pressable, TextInput, Alert, ActivityIndicator } from 'react-native'
+import { View, ScrollView, StyleSheet, Pressable, TextInput, ActivityIndicator } from 'react-native'
 import { AvatarPicker, AvatarDisplay } from '@/components/AvatarPicker'
+import { ConfirmationModal } from '@/components/ConfirmationModal'
+import { Toast, ToastHandle } from '@/components/Toast'
+import { useRef } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect, router } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -34,6 +37,8 @@ export default function ProfileScreen() {
     const [showAvatarPicker, setShowAvatarPicker] = useState(false)
     const [isEditingName, setIsEditingName] = useState(false)
     const [tempName, setTempName] = useState('')
+    const [showResetConfirm, setShowResetConfirm] = useState(false)
+    const toastRef = useRef<ToastHandle>(null)
     
     const [stats, setStats] = useState({
         totalWorkouts: 0,
@@ -130,28 +135,21 @@ export default function ProfileScreen() {
         await AsyncStorage.setItem('user_name', tempName.trim())
         setUserName(tempName.trim())
         setIsEditingName(false)
+        toastRef.current?.show('Name updated!')
     }
 
-    const handleResetData = () => {
-        Alert.alert("Reset All Data?", "This will permanently delete your workout history, PRs, and settings.", [
-            { text: "Cancel", style: "cancel" },
-            { text: "Reset", style: "destructive", onPress: async () => {
-                await AsyncStorage.clear()
-                setUserName('Alex Riggs')
-                setStats({ totalWorkouts: 0, totalVolume: 0, streak: 0, weeklyVolume: 0, monthlyVolume: 0 })
-                setPrs([])
-                router.replace('/')
-            }}
-        ])
+    const confirmReset = async () => {
+        await AsyncStorage.clear()
+        setUserName('Alex Riggs')
+        setStats({ totalWorkouts: 0, totalVolume: 0, streak: 0, weeklyVolume: 0, monthlyVolume: 0 })
+        setPrs([])
+        toastRef.current?.show('Data reset successful')
+        setTimeout(() => router.replace('/'), 1000)
     }
 
     const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
 
-    if (loading) return (
-        <View style={{ flex: 1, backgroundColor: BG, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator color={ACCENT} size="large" />
-        </View>
-    )
+
 
     return (
         <View style={{ flex: 1, backgroundColor: BG }}>
@@ -282,7 +280,7 @@ export default function ProfileScreen() {
                             <View style={s.listIconText}><User size={18} color={TEXT_SECONDARY} /><Text style={s.listItemText}>Edit Name</Text></View>
                             <Text style={s.chevron}>›</Text>
                         </Pressable>
-                        <Pressable style={s.listItem} onPress={handleResetData}>
+                        <Pressable style={s.listItem} onPress={() => setShowResetConfirm(true)}>
                             <View style={s.listIconText}><Trash2 size={18} color="#ef4444" /><Text style={[s.listItemText, { color: '#ef4444' }]}>Reset All Data</Text></View>
                         </Pressable>
                     </Card>
@@ -299,6 +297,17 @@ export default function ProfileScreen() {
                     <Text style={s.logoutText}>Log Out</Text>
                 </Pressable>
             </ScrollView>
+
+            <ConfirmationModal 
+                visible={showResetConfirm}
+                onClose={() => setShowResetConfirm(false)}
+                onConfirm={confirmReset}
+                title="Reset All Data?"
+                message="This will permanently delete your workout history, PRs, and settings. This action cannot be undone."
+                confirmText="Reset Everything"
+            />
+
+            <Toast ref={toastRef} />
         </View>
     )
 }

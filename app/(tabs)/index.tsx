@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { View, ScrollView, StyleSheet, Pressable, Dimensions, ActivityIndicator } from 'react-native'
 import { AvatarPicker, AvatarDisplay } from '@/components/AvatarPicker'
+import { WorkoutDetailModal } from '@/components/WorkoutDetailModal'
+import { Toast, ToastHandle } from '@/components/Toast'
+import { useRef } from 'react'
 import { router, useFocusEffect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -32,6 +35,8 @@ export default function HomeScreen() {
     const [userName, setUserName] = useState('Alex')
     const [userAvatar, setUserAvatar] = useState<any>(null)
     const [showAvatarPicker, setShowAvatarPicker] = useState(false)
+    const [selectedWorkout, setSelectedWorkout] = useState<any>(null)
+    const toastRef = useRef<ToastHandle>(null)
 
     const loadData = useCallback(async () => {
         setLoading(true)
@@ -113,13 +118,7 @@ export default function HomeScreen() {
         }, [loadData])
     )
 
-    if (loading) {
-        return (
-            <View style={{ flex: 1, backgroundColor: BG, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator color={ACCENT} size="large" />
-            </View>
-        )
-    }
+
 
     return (
         <ScrollView
@@ -208,12 +207,12 @@ export default function HomeScreen() {
             {/* Recent Workouts List */}
             <View style={s.sectionHeader}>
                 <Text style={s.sectionTitle}>Recent Workouts</Text>
-                <Pressable onPress={() => router.push('/activity')}><Text style={s.viewAll}>View All</Text></Pressable>
+                <Pressable onPress={() => router.push('/workout-history')}><Text style={s.viewAll}>View All</Text></Pressable>
             </View>
 
             {workouts.length > 0 ? (
                 workouts.map((workout) => (
-                    <Card key={workout.id} style={s.workoutCard}>
+                    <Card key={workout.id} style={s.workoutCard} onPress={() => setSelectedWorkout(workout)}>
                         <View style={s.workoutInfo}>
                             <Text style={s.workoutName}>{workout.name}</Text>
                             <Text style={s.workoutMeta}>
@@ -247,6 +246,14 @@ export default function HomeScreen() {
                 onClose={() => setShowAvatarPicker(false)} 
                 onSelect={setUserAvatar} 
             />
+
+            <WorkoutDetailModal 
+                visible={!!selectedWorkout} 
+                onClose={() => setSelectedWorkout(null)} 
+                workout={selectedWorkout} 
+            />
+
+            <Toast ref={toastRef} />
         </ScrollView>
     )
 }

@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
-import { View, ScrollView, StyleSheet, Pressable, TextInput, Alert, Animated } from 'react-native'
+import { View, ScrollView, StyleSheet, Pressable, TextInput, Animated } from 'react-native'
+import { Toast, ToastHandle } from '@/components/Toast'
+import { useRef } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -49,10 +51,7 @@ export default function ExercisesScreen() {
     const [search, setSearch] = useState('')
     const [activeCat, setActiveCat] = useState('All')
     const [recommended, setRecommended] = useState<typeof EXERCISES>([])
-    
-    // Toast state
-    const [toastMessage, setToastMessage] = useState('')
-    const toastAnim = useState(new Animated.Value(100))[0] // Start below screen
+    const toastRef = useRef<ToastHandle>(null)
 
     // Update recommendations when filter changes
     useEffect(() => {
@@ -78,13 +77,7 @@ export default function ExercisesScreen() {
             list.push({ ...exercise, instanceId: Date.now() })
             await AsyncStorage.setItem('current_workout_exercises', JSON.stringify(list))
             
-            // Trigger Toast
-            setToastMessage(`✅ ${exercise.name} added to workout!`)
-            Animated.sequence([
-                Animated.spring(toastAnim, { toValue: -insets.bottom - 80, useNativeDriver: true, tension: 50, friction: 8 }),
-                Animated.delay(2000),
-                Animated.timing(toastAnim, { toValue: 100, duration: 300, useNativeDriver: true })
-            ]).start()
+            toastRef.current?.show(`${exercise.name} added to workout!`)
         } catch (e) {
             console.error(e)
         }
@@ -201,10 +194,7 @@ export default function ExercisesScreen() {
                 </View>
             </ScrollView>
 
-            {/* Custom Toast */}
-            <Animated.View style={[s.toast, { transform: [{ translateY: toastAnim }] }]}>
-                <Text style={s.toastText}>{toastMessage}</Text>
-            </Animated.View>
+            <Toast ref={toastRef} />
         </View>
     )
 }
@@ -261,23 +251,5 @@ const s = StyleSheet.create({
     muscleTagText: { fontSize: 11, color: ACCENT_LIGHT, fontWeight: '700', textTransform: 'uppercase' },
     addBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(59, 130, 246, 0.1)', alignItems: 'center', justifyContent: 'center' },
 
-    toast: { 
-        position: 'absolute', 
-        left: 20, 
-        right: 20, 
-        backgroundColor: '#1A1A1A', 
-        paddingVertical: 14, 
-        paddingHorizontal: 20, 
-        borderRadius: 12, 
-        borderWidth: 1, 
-        borderColor: 'rgba(59, 130, 246, 0.3)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 5,
-        zIndex: 9999,
-        bottom: 0, // Controlled by translateY
-    },
-    toastText: { color: '#3B82F6', fontSize: 14, fontWeight: '700', textAlign: 'center' },
+
 })

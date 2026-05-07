@@ -253,6 +253,7 @@ function RootLayout() {
                           <Stack.Screen name="support" />
                           <Stack.Screen name="muscle-heatmap" />
                           <Stack.Screen name="workout-calendar" />
+                          <Stack.Screen name="workout-history" />
                           <Stack.Screen name="exercise-details" />
                         </Stack.Protected>
 
