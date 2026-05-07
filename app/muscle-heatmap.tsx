@@ -54,12 +54,12 @@ export default function MuscleHeatmapScreen() {
         }
 
         const now = new Date()
-        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1)))
-        startOfWeek.setHours(0, 0, 0, 0)
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        sevenDaysAgo.setHours(0, 0, 0, 0)
 
         workouts.forEach(w => {
             const wDate = new Date(w.date)
-            if (timeframe === 'weekly' && wDate < startOfWeek) return
+            if (timeframe === 'weekly' && wDate < sevenDaysAgo) return
 
             w.exercises.forEach((ex: any) => {
                 // Find muscle group for this exercise

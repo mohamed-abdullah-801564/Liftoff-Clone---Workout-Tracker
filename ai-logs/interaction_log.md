@@ -232,3 +232,24 @@ Add 2 unique premium features to the app: Muscle Heatmap Screen and Workout Cale
 - Technology Stack: Integrated `react-native-svg` for diagram rendering and `react-native-calendars` for session tracking.
 
 ---
+
+## [2026-05-07] - Prompt
+Fix these bugs across the app:
+Fix 1 — Avatar system: ... (6 fixes total)
+
+## What was done
+- **Fix 1 — Avatar System**:
+    - Created [AvatarPicker.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/components/AvatarPicker.tsx): A reusable component for choosing default anime-style avatars (⚡🔥💪🏆🎯) or uploading from the gallery using `expo-image-picker`.
+    - Modified [index.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/index.tsx) and [profile.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/profile.tsx) to read/display the same avatar from `user_avatar` in AsyncStorage.
+- **Fix 2 — Muscle Heatmap toggle**:
+    - Modified [muscle-heatmap.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/muscle-heatmap.tsx): Fixed timeframe filtering to sum volume from exactly the last 7 days (This Week) vs All Time.
+- **Fix 3 — Current Workout card**:
+    - Modified [workout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/workout.tsx): Added `useFocusEffect` to ensure exercises load from AsyncStorage every time the tab is focused. Added an auto-save `useEffect` to keep the Home screen count in sync during edits.
+- **Fix 4 — Dark theme popup**:
+    - Modified [exercises.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/exercises.tsx): Replaced the standard `Alert` with a custom animated dark-themed toast (#1A1A1A background, blue #3B82F6 text) for a more premium experience.
+- **Fix 5 — Finish Workout button**:
+    - Modified [workout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/workout.tsx): Removed the two-tone gradient/glow effect from the Finish button, replacing it with a solid consistent blue (#3B82F6).
+- **Fix 6 — Workout Calendar name**:
+    - Modified [workout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/workout.tsx): Implemented smart naming logic that uses the header input or defaults to "Workout — [Date]" if left empty, ensuring real names appear in the Workout Calendar.
+
+---

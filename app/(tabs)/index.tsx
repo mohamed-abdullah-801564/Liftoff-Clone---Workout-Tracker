@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { View, ScrollView, StyleSheet, Pressable, Dimensions, ActivityIndicator } from 'react-native'
+import { AvatarPicker, AvatarDisplay } from '@/components/AvatarPicker'
 import { router, useFocusEffect } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -29,6 +30,8 @@ export default function HomeScreen() {
     const [workouts, setWorkouts] = useState<any[]>([])
     const [activeWorkout, setActiveWorkout] = useState<any[] | null>(null)
     const [userName, setUserName] = useState('Alex')
+    const [userAvatar, setUserAvatar] = useState<any>(null)
+    const [showAvatarPicker, setShowAvatarPicker] = useState(false)
 
     const loadData = useCallback(async () => {
         setLoading(true)
@@ -36,8 +39,10 @@ export default function HomeScreen() {
             const data = await AsyncStorage.getItem('workouts')
             const currentEx = await AsyncStorage.getItem('current_workout_exercises')
             const savedName = await AsyncStorage.getItem('user_name')
+            const savedAvatar = await AsyncStorage.getItem('user_avatar')
 
             if (savedName) setUserName(savedName.split(' ')[0]) // Just first name for greeting
+            if (savedAvatar) setUserAvatar(JSON.parse(savedAvatar))
             
             const savedWorkouts = data ? JSON.parse(data) : []
             const currentList = currentEx ? JSON.parse(currentEx) : []
@@ -131,7 +136,9 @@ export default function HomeScreen() {
                         <Text style={s.streakText}>{streak} Day Streak</Text>
                     </View>
                 </View>
-                <View style={s.avatar} />
+                <Pressable onPress={() => setShowAvatarPicker(true)}>
+                    <AvatarDisplay avatar={userAvatar} size={44} fallbackText={userName[0]} />
+                </Pressable>
             </View>
 
             {/* Main Hero Stat */}
@@ -234,6 +241,12 @@ export default function HomeScreen() {
                     </Pressable>
                 </Card>
             )}
+
+            <AvatarPicker 
+                visible={showAvatarPicker} 
+                onClose={() => setShowAvatarPicker(false)} 
+                onSelect={setUserAvatar} 
+            />
         </ScrollView>
     )
 }
@@ -244,7 +257,6 @@ const s = StyleSheet.create({
     greeting: { fontSize: 24, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
     streakBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, backgroundColor: 'rgba(59, 130, 246, 0.1)', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
     streakText: { fontSize: 13, color: ACCENT, fontWeight: '700' },
-    avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: SURFACE, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
     
     heroCard: { padding: 24, gap: 8, backgroundColor: SURFACE, borderColor: 'rgba(255,255,255,0.05)' },
     heroHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

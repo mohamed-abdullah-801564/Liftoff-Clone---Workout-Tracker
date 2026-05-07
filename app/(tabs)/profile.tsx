@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { View, ScrollView, StyleSheet, Pressable, TextInput, Alert, ActivityIndicator } from 'react-native'
+import { AvatarPicker, AvatarDisplay } from '@/components/AvatarPicker'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect, router } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -29,6 +30,8 @@ export default function ProfileScreen() {
     const insets = useSafeAreaInsets()
     const [loading, setLoading] = useState(true)
     const [userName, setUserName] = useState('Alex Riggs')
+    const [userAvatar, setUserAvatar] = useState<any>(null)
+    const [showAvatarPicker, setShowAvatarPicker] = useState(false)
     const [isEditingName, setIsEditingName] = useState(false)
     const [tempName, setTempName] = useState('')
     
@@ -47,7 +50,9 @@ export default function ProfileScreen() {
             const workoutsData = await AsyncStorage.getItem('workouts')
             const workouts = workoutsData ? JSON.parse(workoutsData) : []
             const savedName = await AsyncStorage.getItem('user_name')
+            const savedAvatar = await AsyncStorage.getItem('user_avatar')
             if (savedName) setUserName(savedName)
+            if (savedAvatar) setUserAvatar(JSON.parse(savedAvatar))
 
             // Calculate stats
             const totalWorkouts = workouts.length
@@ -157,12 +162,12 @@ export default function ProfileScreen() {
             >
                 {/* Profile Header */}
                 <View style={s.profileHeader}>
-                    <View style={s.avatarLarge}>
-                        <Text style={s.avatarLargeText}>{getInitials(userName)}</Text>
-                        <Pressable style={s.editAvatar}>
+                    <Pressable style={s.avatarLarge} onPress={() => setShowAvatarPicker(true)}>
+                        <AvatarDisplay avatar={userAvatar} size={80} fallbackText={getInitials(userName)} />
+                        <View style={s.editAvatar}>
                             <Settings size={14} color="#fff" />
-                        </Pressable>
-                    </View>
+                        </View>
+                    </Pressable>
                     
                     {isEditingName ? (
                         <View style={s.editNameRow}>
@@ -283,6 +288,12 @@ export default function ProfileScreen() {
                     </Card>
                 </View>
 
+                <AvatarPicker 
+                    visible={showAvatarPicker} 
+                    onClose={() => setShowAvatarPicker(false)} 
+                    onSelect={setUserAvatar} 
+                />
+
                 <Pressable style={s.logoutBtn}>
                     <LogOut size={18} color={TEXT_TERTIARY} />
                     <Text style={s.logoutText}>Log Out</Text>
@@ -294,7 +305,7 @@ export default function ProfileScreen() {
 
 const s = StyleSheet.create({
     profileHeader: { alignItems: 'center', marginBottom: 24 },
-    avatarLarge: { width: 80, height: 80, borderRadius: 40, backgroundColor: SURFACE, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: BORDER, position: 'relative' },
+    avatarLarge: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center', position: 'relative' },
     avatarLargeText: { fontSize: 28, fontWeight: '800', color: '#fff' },
     editAvatar: { position: 'absolute', bottom: 0, right: 0, backgroundColor: ACCENT, width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: BG },
     nameWrap: { alignItems: 'center', marginTop: 12 },

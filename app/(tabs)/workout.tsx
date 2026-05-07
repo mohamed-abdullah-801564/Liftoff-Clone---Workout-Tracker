@@ -25,7 +25,7 @@ export default function WorkoutScreen() {
     const insets = useSafeAreaInsets()
     const [loading, setLoading] = useState(true)
     const [timer, setTimer] = useState('01:24')
-    const [workoutName, setWorkoutName] = useState('New Workout')
+    const [workoutName, setWorkoutName] = useState('')
     const [exercises, setExercises] = useState<any[]>([])
     const [previousPRs, setPreviousPRs] = useState<Record<string, number>>({})
     
@@ -56,16 +56,24 @@ export default function WorkoutScreen() {
                     sets: ex.sets || [{ id: Date.now() + Math.random(), weight: '', reps: '', status: 'active' }]
                 })))
             }
-        } catch (e) {
-            console.error(e)
         } finally {
             setLoading(false)
         }
     }, [])
 
+    useFocusEffect(
+        useCallback(() => {
+            loadWorkout()
+        }, [loadWorkout])
+    )
+
+    // Save to AsyncStorage whenever exercises change so Home screen count is accurate
+    // and we don't lose set data when navigating to Add Exercises and back.
     useEffect(() => {
-        loadWorkout()
-    }, [loadWorkout])
+        if (!loading) {
+            AsyncStorage.setItem('current_workout_exercises', JSON.stringify(exercises))
+        }
+    }, [exercises, loading])
 
     const triggerPRCelebration = (exerciseName: string) => {
         setShowPR(exerciseName)
@@ -157,10 +165,14 @@ export default function WorkoutScreen() {
                 return { ...ex, volume: vol, completedSets: completedSets.length }
             })
 
+            const now = new Date()
+            const dateLabel = now.toLocaleDateString([], { month: 'short', day: 'numeric' })
+            const finalName = workoutName.trim() || `Workout — ${dateLabel}`
+
             const workoutObj = {
                 id: Date.now().toString(),
-                name: workoutName,
-                date: new Date().toISOString(),
+                name: finalName,
+                date: now.toISOString(),
                 duration: '42:15',
                 volume: totalVolume,
                 totalSets,
@@ -211,7 +223,7 @@ export default function WorkoutScreen() {
                         style={s.workoutTitle} 
                         value={workoutName}
                         onChangeText={setWorkoutName}
-                        placeholder="Workout Name"
+                        placeholder={`Workout — ${new Date().toLocaleDateString([], { month: 'short', day: 'numeric' })}`}
                         placeholderTextColor={TEXT_TERTIARY}
                     />
                     <Text style={s.workoutTime}>00:42:15</Text>
@@ -305,7 +317,6 @@ export default function WorkoutScreen() {
             <View style={[s.bottomActions, { paddingBottom: insets.bottom + TAB_BAR_CLEARANCE + 10 }]}>
                 <Pressable style={s.finishBtnLarge} onPress={finishWorkout}>
                     <Text style={s.finishBtnText}>Finish Workout</Text>
-                    <View style={s.finishBtnGlow} />
                 </Pressable>
             </View>
         </View>
@@ -347,9 +358,8 @@ const s = StyleSheet.create({
     addExText: { fontSize: 16, color: ACCENT, fontWeight: '700' },
 
     bottomActions: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 20, backgroundColor: 'rgba(10,10,10,0.9)' },
-    finishBtnLarge: { backgroundColor: ACCENT, borderRadius: 20, paddingVertical: 18, alignItems: 'center', overflow: 'hidden' },
+    finishBtnLarge: { backgroundColor: '#3B82F6', borderRadius: 20, paddingVertical: 18, alignItems: 'center' },
     finishBtnText: { color: '#fff', fontSize: 18, fontWeight: '800' },
-    finishBtnGlow: { position: 'absolute', bottom: -40, width: '100%', height: 60, backgroundColor: '#fff', opacity: 0.2 },
 
     prOverlay: { position: 'absolute', top: height / 2 - 100, left: 20, right: 20, backgroundColor: 'rgba(0,0,0,0.9)', borderRadius: 20, padding: 30, alignItems: 'center', zIndex: 1000, borderWidth: 2, borderColor: '#f59e0b', shadowColor: '#f59e0b', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.5, shadowRadius: 20 },
     prTitle: { color: '#f59e0b', fontSize: 20, fontWeight: '900', marginTop: 16, textAlign: 'center' },
