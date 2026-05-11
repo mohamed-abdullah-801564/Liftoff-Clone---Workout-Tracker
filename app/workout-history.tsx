@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { View, StyleSheet, ScrollView, Pressable } from 'react-native'
+import { View, StyleSheet, ScrollView, Pressable, TouchableOpacity } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -7,12 +7,10 @@ import { ChevronLeft, Calendar, BarChart2, Dumbbell, ChevronRight } from 'lucide
 import { Text } from '@/components/ui/Text'
 import { Card } from '@/components/ui/Card'
 import { BG, SURFACE, SURFACE2, ACCENT, TEXT_SECONDARY, TEXT_TERTIARY, BORDER, ACCENT_LIGHT } from '@/lib/theme'
-import { WorkoutDetailModal } from '@/components/WorkoutDetailModal'
 
 export default function WorkoutHistoryScreen() {
     const insets = useSafeAreaInsets()
     const [workouts, setWorkouts] = useState<any[]>([])
-    const [selectedWorkout, setSelectedWorkout] = useState<any>(null)
 
     const loadHistory = useCallback(async () => {
         const data = await AsyncStorage.getItem('workouts')
@@ -44,37 +42,39 @@ export default function WorkoutHistoryScreen() {
                     </View>
                 ) : (
                     workouts.map((w) => (
-                        <Card key={w.id} style={s.workoutCard} onPress={() => setSelectedWorkout(w)}>
-                            <View style={s.cardTop}>
-                                <View style={{ flex: 1 }}>
-                                    <Text style={s.workoutName}>{w.name}</Text>
-                                    <View style={s.dateRow}>
-                                        <Calendar size={12} color={TEXT_TERTIARY} />
-                                        <Text style={s.dateText}>{new Date(w.date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</Text>
+                        <TouchableOpacity
+                            key={w.id}
+                            activeOpacity={0.7}
+                            onPress={() => router.push({ pathname: '/workout-detail', params: { workout: JSON.stringify(w) } })}
+                        >
+                            <Card style={s.workoutCard}>
+                                <View style={s.cardPressable}>
+                                    <View style={s.cardTop}>
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={s.workoutName}>{w.name}</Text>
+                                        <View style={s.dateRow}>
+                                            <Calendar size={12} color={TEXT_TERTIARY} />
+                                            <Text style={s.dateText}>{new Date(w.date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</Text>
+                                        </View>
+                                        </View>
+                                        <ChevronRight size={20} color={TEXT_TERTIARY} />
+                                    </View>
+                                    <View style={s.cardStats}>
+                                        <View style={s.cardStat}>
+                                            <BarChart2 size={14} color={ACCENT} />
+                                            <Text style={s.cardStatText}>{w.volume.toLocaleString()} kg</Text>
+                                        </View>
+                                        <View style={s.cardStat}>
+                                            <Dumbbell size={14} color={ACCENT} />
+                                            <Text style={s.cardStatText}>{w.exercises.length} exercises</Text>
+                                        </View>
                                     </View>
                                 </View>
-                                <ChevronRight size={20} color={TEXT_TERTIARY} />
-                            </View>
-                            <View style={s.cardStats}>
-                                <View style={s.cardStat}>
-                                    <BarChart2 size={14} color={ACCENT} />
-                                    <Text style={s.cardStatText}>{w.volume.toLocaleString()} kg</Text>
-                                </View>
-                                <View style={s.cardStat}>
-                                    <Dumbbell size={14} color={ACCENT} />
-                                    <Text style={s.cardStatText}>{w.exercises.length} exercises</Text>
-                                </View>
-                            </View>
-                        </Card>
+                            </Card>
+                        </TouchableOpacity>
                     ))
                 )}
             </ScrollView>
-
-            <WorkoutDetailModal 
-                visible={!!selectedWorkout} 
-                onClose={() => setSelectedWorkout(null)} 
-                workout={selectedWorkout} 
-            />
         </View>
     )
 }
@@ -86,7 +86,8 @@ const s = StyleSheet.create({
     title: { fontSize: 18, fontWeight: '800', color: '#fff' },
     scrollContent: { padding: 20, gap: 16 },
     
-    workoutCard: { padding: 16, gap: 12 },
+    workoutCard: { padding: 0, overflow: 'hidden' },
+    cardPressable: { padding: 16, gap: 12 },
     cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     workoutName: { fontSize: 17, fontWeight: '700', color: ACCENT_LIGHT },
     dateRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },

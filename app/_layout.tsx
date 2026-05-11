@@ -254,7 +254,10 @@ function RootLayout() {
                           <Stack.Screen name="muscle-heatmap" />
                           <Stack.Screen name="workout-calendar" />
                           <Stack.Screen name="workout-history" />
+                          <Stack.Screen name="workout-detail" />
                           <Stack.Screen name="exercise-details" />
+                          <Stack.Screen name="routines" />
+                          <Stack.Screen name="create-routine" />
                         </Stack.Protected>
 
                         {/* ── Always-public screens — declared LAST so they don't become

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { View, ScrollView, StyleSheet, Pressable, Dimensions, ActivityIndicator } from 'react-native'
+import { View, ScrollView, StyleSheet, Pressable, Dimensions, ActivityIndicator, TouchableOpacity } from 'react-native'
 import { AvatarPicker, AvatarDisplay } from '@/components/AvatarPicker'
 import { WorkoutDetailModal } from '@/components/WorkoutDetailModal'
 import { Toast, ToastHandle } from '@/components/Toast'
@@ -20,7 +20,9 @@ import {
     BORDER,
 } from '@/lib/theme'
 import { TAB_BAR_CLEARANCE } from '@/components/TabBar'
-import { Flame, Trophy, Calendar, ChevronRight, Play, ArrowUpRight, Plus, Accessibility, Dumbbell } from 'lucide-react-native'
+import { Flame, Trophy, Calendar, ChevronRight, Play, ArrowUpRight, Plus, Accessibility, Dumbbell, List } from 'lucide-react-native'
+import { BottomSheetModal, BottomSheetView, BottomSheetBackdrop } from '@gorhom/bottom-sheet'
+import { useMemo } from 'react'
 
 const { width } = Dimensions.get('window')
 
@@ -36,7 +38,10 @@ export default function HomeScreen() {
     const [userAvatar, setUserAvatar] = useState<any>(null)
     const [showAvatarPicker, setShowAvatarPicker] = useState(false)
     const [selectedWorkout, setSelectedWorkout] = useState<any>(null)
+    const [savedRoutines, setSavedRoutines] = useState<any[]>([])
     const toastRef = useRef<ToastHandle>(null)
+    const bottomSheetModalRef = useRef<BottomSheetModal>(null)
+    const snapPoints = useMemo(() => ['45%'], [])
 
     const loadData = useCallback(async () => {
         setLoading(true)
@@ -45,9 +50,11 @@ export default function HomeScreen() {
             const currentEx = await AsyncStorage.getItem('current_workout_exercises')
             const savedName = await AsyncStorage.getItem('user_name')
             const savedAvatar = await AsyncStorage.getItem('user_avatar')
+            const routinesData = await AsyncStorage.getItem('routines')
 
             if (savedName) setUserName(savedName.split(' ')[0]) // Just first name for greeting
             if (savedAvatar) setUserAvatar(JSON.parse(savedAvatar))
+            if (routinesData) setSavedRoutines(JSON.parse(routinesData))
             
             const savedWorkouts = data ? JSON.parse(data) : []
             const currentList = currentEx ? JSON.parse(currentEx) : []
@@ -158,11 +165,11 @@ export default function HomeScreen() {
             </Card>
             {/* Quick Actions */}
             <View style={s.actionRow}>
-                <Pressable style={s.actionBtn} onPress={() => router.push('/muscle-heatmap')}>
-                    <Accessibility size={20} color={ACCENT} />
-                    <Text style={s.actionBtnText}>Muscle Map</Text>
+                <Pressable style={s.actionBtn} onPress={() => router.push('/routines')}>
+                    <List size={20} color={ACCENT} />
+                    <Text style={s.actionBtnText}>Routines</Text>
                 </Pressable>
-                <Pressable style={s.actionBtn} onPress={() => router.push('/workout')}>
+                <Pressable style={s.actionBtn} onPress={() => bottomSheetModalRef.current?.present()}>
                     <Dumbbell size={20} color={ACCENT} />
                     <Text style={s.actionBtnText}>Start Workout</Text>
                 </Pressable>
@@ -187,7 +194,7 @@ export default function HomeScreen() {
             {!activeWorkout && (
                 <Pressable 
                     style={({ pressed }) => [s.startBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }]}
-                    onPress={() => router.push('/workout')}
+                    onPress={() => bottomSheetModalRef.current?.present()}
                 >
                     <View style={s.startBtnContent}>
                         <View style={s.playIconWrap}>
@@ -212,18 +219,24 @@ export default function HomeScreen() {
 
             {workouts.length > 0 ? (
                 workouts.map((workout) => (
-                    <Card key={workout.id} style={s.workoutCard} onPress={() => setSelectedWorkout(workout)}>
-                        <View style={s.workoutInfo}>
-                            <Text style={s.workoutName}>{workout.name}</Text>
-                            <Text style={s.workoutMeta}>
-                                {new Date(workout.date).toLocaleDateString([], { month: 'short', day: 'numeric' })} • {workout.duration} • {workout.totalSets || 0} sets
-                            </Text>
-                        </View>
-                        <View style={s.workoutVolume}>
-                            <Text style={s.volValue}>{(workout.volume || 0).toLocaleString()} kg</Text>
-                            <Text style={s.volLabel}>Volume</Text>
-                        </View>
-                    </Card>
+                    <TouchableOpacity 
+                        key={workout.id} 
+                        activeOpacity={0.7}
+                        onPress={() => router.push({ pathname: '/workout-detail', params: { workout: JSON.stringify(workout) } })}
+                    >
+                        <Card style={s.workoutCard}>
+                            <View style={s.workoutInfo}>
+                                <Text style={s.workoutName}>{workout.name}</Text>
+                                <Text style={s.workoutMeta}>
+                                    {new Date(workout.date).toLocaleDateString([], { month: 'short', day: 'numeric' })} • {workout.duration} • {workout.totalSets || 0} sets
+                                </Text>
+                            </View>
+                            <View style={s.workoutVolume}>
+                                <Text style={s.volValue}>{(workout.volume || 0).toLocaleString()} kg</Text>
+                                <Text style={s.volLabel}>Volume</Text>
+                            </View>
+                        </Card>
+                    </TouchableOpacity>
                 ))
             ) : (
                 <Card style={s.emptyState}>
@@ -254,6 +267,84 @@ export default function HomeScreen() {
             />
 
             <Toast ref={toastRef} />
+
+            <BottomSheetModal
+                ref={bottomSheetModalRef}
+                index={0}
+                snapPoints={snapPoints}
+                backdropComponent={(props) => (
+                    <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
+                )}
+                backgroundStyle={{ backgroundColor: SURFACE }}
+                handleIndicatorStyle={{ backgroundColor: BORDER }}
+            >
+                <BottomSheetView style={s.modalContent}>
+                    <Text style={s.modalTitle}>Start Workout</Text>
+                    
+                    <Pressable 
+                        style={s.modalOption}
+                        onPress={() => {
+                            bottomSheetModalRef.current?.dismiss()
+                            router.push('/workout')
+                        }}
+                    >
+                        <View style={s.optionIcon}>
+                            <Plus size={22} color={ACCENT} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={s.optionTitle}>Quick Start</Text>
+                            <Text style={s.optionSub}>Start an empty workout</Text>
+                        </View>
+                        <ChevronRight size={20} color={TEXT_TERTIARY} />
+                    </Pressable>
+
+                    <View style={s.divider} />
+
+                    <View style={{ flex: 1 }}>
+                        <View style={s.routineHeader}>
+                            <Text style={s.routineSectionTitle}>My Routines</Text>
+                            <Pressable onPress={() => {
+                                bottomSheetModalRef.current?.dismiss()
+                                router.push('/routines')
+                            }}>
+                                <Text style={s.manageLink}>Manage</Text>
+                            </Pressable>
+                        </View>
+
+                        {savedRoutines.length > 0 ? (
+                            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+                                {savedRoutines.map((routine) => (
+                                    <Pressable 
+                                        key={routine.id} 
+                                        style={s.routineItem}
+                                        onPress={async () => {
+                                            await AsyncStorage.setItem('current_workout_exercises', JSON.stringify(routine.exercises))
+                                            bottomSheetModalRef.current?.dismiss()
+                                            router.push({
+                                                pathname: '/(tabs)/workout',
+                                                params: { routineName: routine.name }
+                                            })
+                                        }}
+                                    >
+                                        <View style={s.routineIcon}>
+                                            <List size={18} color={TEXT_SECONDARY} />
+                                        </View>
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={s.routineItemName}>{routine.name}</Text>
+                                            <Text style={s.routineItemSub}>{routine.exercises.length} exercises</Text>
+                                        </View>
+                                        <Play size={16} color={ACCENT} fill={ACCENT} />
+                                    </Pressable>
+                                ))}
+                            </ScrollView>
+                        ) : (
+                            <View style={s.emptyRoutines}>
+                                <Text style={s.emptyRoutinesText}>No saved routines yet</Text>
+                            </View>
+                        )}
+                    </View>
+                </BottomSheetView>
+            </BottomSheetModal>
         </ScrollView>
     )
 }
@@ -312,4 +403,22 @@ const s = StyleSheet.create({
     activeTime: { fontSize: 12, color: TEXT_TERTIARY, fontWeight: '600' },
     activeTitle: { fontSize: 20, fontWeight: '800', color: '#fff', letterSpacing: -0.3 },
     activeSub: { fontSize: 14, color: TEXT_SECONDARY, fontWeight: '500' },
+
+    // Modal Styles
+    modalContent: { flex: 1, padding: 24, gap: 20 },
+    modalTitle: { fontSize: 22, fontWeight: '800', color: '#fff', marginBottom: 4 },
+    modalOption: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingVertical: 12 },
+    optionIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(59, 130, 246, 0.1)', alignItems: 'center', justifyContent: 'center' },
+    optionTitle: { fontSize: 16, fontWeight: '700', color: '#fff' },
+    optionSub: { fontSize: 13, color: TEXT_TERTIARY, fontWeight: '500', marginTop: 2 },
+    divider: { height: 1, backgroundColor: BORDER },
+    routineHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+    routineSectionTitle: { fontSize: 14, fontWeight: '700', color: TEXT_TERTIARY, textTransform: 'uppercase', letterSpacing: 0.5 },
+    manageLink: { fontSize: 13, color: ACCENT, fontWeight: '600' },
+    routineItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
+    routineIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: SURFACE2, alignItems: 'center', justifyContent: 'center' },
+    routineItemName: { fontSize: 15, fontWeight: '600', color: '#fff' },
+    routineItemSub: { fontSize: 12, color: TEXT_TERTIARY, fontWeight: '500', marginTop: 1 },
+    emptyRoutines: { paddingVertical: 20, alignItems: 'center' },
+    emptyRoutinesText: { fontSize: 13, color: TEXT_TERTIARY, fontStyle: 'italic' },
 })

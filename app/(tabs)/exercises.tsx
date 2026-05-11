@@ -3,7 +3,7 @@ import { View, ScrollView, StyleSheet, Pressable, TextInput, Animated } from 're
 import { Toast, ToastHandle } from '@/components/Toast'
 import { useRef } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { router } from 'expo-router'
+import { useLocalSearchParams, router } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Text } from '@/components/ui/Text'
 import { Card } from '@/components/ui/Card'
@@ -48,6 +48,8 @@ const EXERCISES = [
 
 export default function ExercisesScreen() {
     const insets = useSafeAreaInsets()
+    const { mode } = useLocalSearchParams()
+    const isRoutineMode = mode === 'routine'
     const [search, setSearch] = useState('')
     const [activeCat, setActiveCat] = useState('All')
     const [recommended, setRecommended] = useState<typeof EXERCISES>([])
@@ -71,13 +73,14 @@ export default function ExercisesScreen() {
 
     const addToWorkout = async (exercise: typeof EXERCISES[0]) => {
         try {
-            const existing = await AsyncStorage.getItem('current_workout_exercises')
+            const key = isRoutineMode ? 'temp_routine_exercises' : 'current_workout_exercises'
+            const existing = await AsyncStorage.getItem(key)
             const list = existing ? JSON.parse(existing) : []
             
             list.push({ ...exercise, instanceId: Date.now() })
-            await AsyncStorage.setItem('current_workout_exercises', JSON.stringify(list))
+            await AsyncStorage.setItem(key, JSON.stringify(list))
             
-            toastRef.current?.show(`${exercise.name} added to workout!`)
+            toastRef.current?.show(`${exercise.name} added to ${isRoutineMode ? 'routine' : 'workout'}!`)
         } catch (e) {
             console.error(e)
         }

@@ -253,3 +253,78 @@ Fix 1 — Avatar system: ... (6 fixes total)
     - Modified [workout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/workout.tsx): Implemented smart naming logic that uses the header input or defaults to "Workout — [Date]" if left empty, ensuring real names appear in the Workout Calendar.
 
 ---
+
+## [2026-05-08] - Prompt
+Add a Routine Builder feature to the app:
+New Screen — app/routines.tsx:
+List of saved routines with name and exercise count
+'Create New Routine' button at top
+Each routine card shows name, number of exercises, last used date
+Tapping a routine shows its exercises
+Long press a routine to delete it
+
+New Screen — app/create-routine.tsx:
+Text input for routine name at top
+Button to add exercises (navigates to exercise library in 'routine mode')
+List of added exercises with ability to remove each
+'Save Routine' button saves to AsyncStorage under 'routines' key
+
+Update Exercise Library (app/(tabs)/exercises.tsx):
+Accept a param mode — either 'workout' or 'routine'
+In 'routine mode', the + button adds exercise to the current routine being built instead of current workout
+
+Update Home Screen (app/(tabs)/index.tsx):
+'Start Workout' button should open a bottom sheet with 2 options:
+'Quick Start' — starts empty workout immediately
+'From Routine' — shows list of saved routines to pick from
+When user picks a routine, load its exercises into workout.tsx automatically
+
+Update Workout Screen (app/(tabs)/workout.tsx):
+Accept pre-loaded exercises when launched from a routine
+Show routine name as the workout name automatically
+
+Save all routines to AsyncStorage under key 'saved_routines'.
+After implementing update ai-logs/interaction_log.md.
+
+## What was done
+- Modified [exercises.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/exercises.tsx): Added support for `mode='routine'`. Exercises can now be added to a temporary `temp_routine_exercises` state in AsyncStorage when building a routine.
+- Created [routines.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/routines.tsx): Implemented the Routine Management screen with a list of saved routines, exercise counts, and last used dates. Added long-press deletion and one-tap routine starting.
+- Created [create-routine.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/create-routine.tsx): Built the Routine Builder screen allowing users to name their routine and select exercises from the library.
+- Modified [index.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/index.tsx): Integrated `@gorhom/bottom-sheet` to present "Quick Start" vs "From Routine" options. Added a new "Routines" quick action to the dashboard.
+- Modified [workout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/workout.tsx): Updated the logger to accept a `routineName` parameter, automatically setting the workout title when launched from a routine.
+
+---
+
+## [2026-05-11] - Prompt
+Fix these 3 critical bugs:
+Fix 1 — Workout cards not showing details when tapped:
+In both app/(tabs)/index.tsx (Recent Workouts) and app/workout-history.tsx (View All screen), each workout card must be wrapped in a TouchableOpacity. When tapped, navigate to app/workout-detail.tsx passing the workout object as a route param.
+Create app/workout-detail.tsx showing:
+- Workout name as header
+- Date and duration
+- Total volume in kg
+- List of all exercises with their sets — each set showing Set number, Weight (kg), Reps, and completed status
+Register this route in app/_layout.tsx
+
+Fix 2 — Timer auto-starts immediately, needs proper control:
+In app/(tabs)/workout.tsx:
+- Timer should NOT start automatically when screen loads
+- Add a clear 'Start' state — when workout screen opens show a 'Begin Workout' button in the center that when tapped starts the timer and shows the exercise list
+- Once workout is started, show a pause/resume button next to the timer
+- Timer only starts counting when user explicitly taps 'Begin Workout'
+- When 'Finish Workout' is tapped, stop and save the elapsed time
+
+Fix 3 — View All workout history items not tappable:
+In app/workout-history.tsx, wrap each workout item in TouchableOpacity that navigates to app/workout-detail.tsx with the full workout data passed as params.
+After all fixes update ai-logs/interaction_log.md
+
+## What was done
+- Modified [index.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/index.tsx): Wrapped "Recent Workout" cards in `TouchableOpacity` for a premium tappable feel. Fixed navigation to pass the full workout object as a JSON parameter to the detail screen.
+- Modified [workout-history.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/workout-history.tsx): Wrapped all history items in `TouchableOpacity` and implemented navigation to `workout-detail`.
+- Modified [workout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/workout.tsx): 
+    - Fixed the timer auto-start bug by ensuring `workoutStarted` is only true after user interaction.
+    - Enhanced the "Begin Workout" splash screen with a dedicated workout name input and a prominent start button.
+    - Improved the active timer UI with integrated pause/resume controls.
+- Verified [workout-detail.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/workout-detail.tsx): Confirmed the detail screen correctly renders workout metadata (date, volume, duration) and a granular exercise/set list with completion status.
+- Verified [_layout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/_layout.tsx): Confirmed the `workout-detail` route is properly registered in the app stack.
+

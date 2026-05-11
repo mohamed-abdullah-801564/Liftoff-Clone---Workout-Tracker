@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { View, ScrollView, StyleSheet, Pressable, TextInput, ActivityIndicator, Animated, Dimensions } from 'react-native'
-import { router, useFocusEffect } from 'expo-router'
+import { useState, useEffect, useCallback } from 'react'
+import { View, ScrollView, StyleSheet, Pressable, TextInput, ActivityIndicator, Animated, Dimensions, TouchableOpacity } from 'react-native'
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as Haptics from 'expo-haptics'
@@ -25,14 +25,16 @@ const { width, height } = Dimensions.get('window')
 
 export default function WorkoutScreen() {
     const insets = useSafeAreaInsets()
+    const { routineName } = useLocalSearchParams()
     const [loading, setLoading] = useState(false)
+    const [workoutStarted, setWorkoutStarted] = useState(false)
+    const [isRunning, setIsRunning] = useState(false)
     const [secondsElapsed, setSecondsElapsed] = useState(0)
-    const [timer, setTimer] = useState('01:24')
-    const [workoutName, setWorkoutName] = useState('')
+    const [workoutName, setWorkoutName] = useState((routineName as string) || '')
     const [exercises, setExercises] = useState<any[]>([])
     const [previousPRs, setPreviousPRs] = useState<Record<string, number>>({})
     const toastRef = useRef<ToastHandle>(null)
-    
+
     // PR Celebration Animation
     const prAnim = useState(new Animated.Value(0))[0]
     const [showPR, setShowPR] = useState<string | null>(null)
@@ -42,7 +44,7 @@ export default function WorkoutScreen() {
             const data = await AsyncStorage.getItem('current_workout_exercises')
             const history = await AsyncStorage.getItem('workouts')
             const workouts = history ? JSON.parse(history) : []
-            
+
             // Calculate current PRs from history
             const prMap: Record<string, number> = {}
             workouts.forEach((w: any) => {
@@ -65,13 +67,14 @@ export default function WorkoutScreen() {
         }
     }, [])
 
-    // Timer Logic
+    // Timer — only ticks when workoutStarted AND isRunning
     useEffect(() => {
+        if (!workoutStarted || !isRunning) return
         const interval = setInterval(() => {
             setSecondsElapsed(prev => prev + 1)
         }, 1000)
         return () => clearInterval(interval)
-    }, [])
+    }, [workoutStarted, isRunning])
 
     const formatDuration = (seconds: number) => {
         const h = Math.floor(seconds / 3600)
@@ -119,11 +122,11 @@ export default function WorkoutScreen() {
             const lastSet = ex.sets[ex.sets.length - 1]
             return {
                 ...ex,
-                sets: [...ex.sets, { 
-                    id: Date.now() + Math.random(), 
-                    weight: lastSet?.weight || '', 
-                    reps: lastSet?.reps || '', 
-                    status: 'active' 
+                sets: [...ex.sets, {
+                    id: Date.now() + Math.random(),
+                    weight: lastSet?.weight || '',
+                    reps: lastSet?.reps || '',
+                    status: 'active'
                 }]
             }
         }))
@@ -172,10 +175,13 @@ export default function WorkoutScreen() {
             return
         }
 
+        // Stop timer
+        setIsRunning(false)
+
         try {
             let totalVolume = 0
             let totalSets = 0
-            
+
             const processedExercises = exercises.map(ex => {
                 const completedSets = ex.sets.filter((s: any) => s.status === 'completed')
                 const vol = completedSets.reduce((acc: number, s: any) => acc + (parseFloat(s.weight) || 0) * (parseInt(s.reps) || 0), 0)
@@ -201,15 +207,15 @@ export default function WorkoutScreen() {
             const existing = await AsyncStorage.getItem('workouts')
             const list = existing ? JSON.parse(existing) : []
             list.push(workoutObj)
-            
+
             await AsyncStorage.setItem('workouts', JSON.stringify(list))
             await AsyncStorage.removeItem('current_workout_exercises')
-            
+
             // Reset state
             setExercises([])
             setWorkoutName('')
             setSecondsElapsed(0)
-            
+
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
             toastRef.current?.show(`Workout Complete! Total Volume: ${totalVolume.toLocaleString()} kg`)
             setTimeout(() => router.replace('/(tabs)'), 1000)
@@ -220,6 +226,54 @@ export default function WorkoutScreen() {
 
 
 
+    // ── Begin Workout splash ──────────────────────────────────────────────
+    if (!workoutStarted) {
+        return (
+            <View style={[s.splashContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+                {/* Header */}
+                <View style={[s.header, { borderBottomWidth: 0 }]}>
+                    <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
+                        <ChevronLeft size={24} color="#fff" />
+                    </TouchableOpacity>
+                </View>
+
+                {/* CTA */}
+                <View style={s.splashBody}>
+                    <View style={s.splashIconRing}>
+                        <Timer size={54} color={ACCENT} />
+                    </View>
+                    <View style={{ alignItems: 'center', gap: 12 }}>
+                        <Text style={s.splashTitle}>Ready to Train?</Text>
+                        <Text style={s.splashSub}>Your exercises are loaded and ready. Start the session to begin tracking your time.</Text>
+                    </View>
+
+                    <TextInput
+                        style={s.workoutTitleSplash}
+                        value={workoutName}
+                        onChangeText={setWorkoutName}
+                        placeholder={`Workout — ${new Date().toLocaleDateString([], { month: 'short', day: 'numeric' })}`}
+                        placeholderTextColor={TEXT_TERTIARY}
+                    />
+
+                    <TouchableOpacity
+                        style={s.beginBtn}
+                        activeOpacity={0.8}
+                        onPress={() => {
+                            setWorkoutStarted(true)
+                            setIsRunning(true)
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+                        }}
+                    >
+                        <Text style={s.beginBtnText}>Begin Workout</Text>
+                    </TouchableOpacity>
+                </View>
+
+                <Toast ref={toastRef} />
+            </View>
+        )
+    }
+
+    // ── Active workout ───────────────────────────────────────────────────
     return (
         <View style={{ flex: 1, backgroundColor: BG }}>
             {/* PR Celebration Overlay */}
@@ -237,8 +291,8 @@ export default function WorkoutScreen() {
                     <ChevronLeft size={24} color="#fff" />
                 </Pressable>
                 <View style={{ flex: 1, alignItems: 'center' }}>
-                    <TextInput 
-                        style={s.workoutTitle} 
+                    <TextInput
+                        style={s.workoutTitle}
                         value={workoutName}
                         onChangeText={setWorkoutName}
                         placeholder={`Workout — ${new Date().toLocaleDateString([], { month: 'short', day: 'numeric' })}`}
@@ -256,16 +310,25 @@ export default function WorkoutScreen() {
                 contentContainerStyle={[s.container, { paddingBottom: insets.bottom + 140 }]}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Rest Timer UI */}
+                {/* Timer display with pause/resume */}
                 <View style={s.timerSection}>
                     <View style={s.timerOuter}>
                         <View style={s.timerInner}>
                             <Timer size={24} color={ACCENT} style={{ marginBottom: 4 }} />
-                            <Text style={s.timerValue}>{timer}</Text>
-                            <Text style={s.timerLabel}>Rest Timer</Text>
+                            <Text style={s.timerValue}>{formatDuration(secondsElapsed)}</Text>
+                            <Text style={s.timerLabel}>Elapsed</Text>
                         </View>
                         <View style={s.timerProgress} />
                     </View>
+                    <Pressable
+                        style={s.pauseBtn}
+                        onPress={() => {
+                            setIsRunning(r => !r)
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                        }}
+                    >
+                        <Text style={s.pauseBtnText}>{isRunning ? '⏸ Pause' : '▶ Resume'}</Text>
+                    </Pressable>
                 </View>
 
                 {/* Exercises */}
@@ -291,7 +354,7 @@ export default function WorkoutScreen() {
                             <View key={set.id} style={[s.tableRow, set.status === 'active' && s.activeRow]}>
                                 <View style={{ flex: 1 }}><Text style={s.cellText}>{i + 1}</Text></View>
                                 <View style={{ flex: 2 }}>
-                                    <TextInput 
+                                    <TextInput
                                         style={s.cellInput}
                                         value={set.weight.toString()}
                                         onChangeText={(val) => updateSet(ex.instanceId || ex.id, set.id, { weight: val })}
@@ -301,7 +364,7 @@ export default function WorkoutScreen() {
                                     />
                                 </View>
                                 <View style={{ flex: 2 }}>
-                                    <TextInput 
+                                    <TextInput
                                         style={s.cellInput}
                                         value={set.reps.toString()}
                                         onChangeText={(val) => updateSet(ex.instanceId || ex.id, set.id, { reps: val })}
@@ -310,7 +373,7 @@ export default function WorkoutScreen() {
                                         placeholderTextColor={TEXT_TERTIARY}
                                     />
                                 </View>
-                                <Pressable 
+                                <Pressable
                                     style={[s.checkBtn, set.status === 'completed' && s.checkBtnDone]}
                                     onPress={() => toggleSetStatus(ex.instanceId || ex.id, set.id)}
                                 >
@@ -344,6 +407,18 @@ export default function WorkoutScreen() {
 }
 
 const s = StyleSheet.create({
+    splashContainer: { flex: 1, backgroundColor: BG },
+    splashBody: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40, gap: 32 },
+    splashIconRing: { width: 130, height: 130, borderRadius: 65, backgroundColor: 'rgba(59,130,246,0.1)', borderWidth: 2, borderColor: 'rgba(59,130,246,0.3)', alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
+    splashTitle: { fontSize: 32, fontWeight: '900', color: '#fff', textAlign: 'center', letterSpacing: -0.5 },
+    splashSub: { fontSize: 16, color: TEXT_SECONDARY, textAlign: 'center', lineHeight: 24, paddingHorizontal: 10 },
+    workoutTitleSplash: { fontSize: 18, fontWeight: '700', color: '#fff', backgroundColor: SURFACE, paddingHorizontal: 20, paddingVertical: 14, borderRadius: 12, width: '100%', textAlign: 'center', borderWidth: 1, borderColor: BORDER },
+    beginBtn: { backgroundColor: ACCENT, borderRadius: 24, paddingVertical: 20, width: '100%', alignItems: 'center', shadowColor: ACCENT, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 8 },
+    beginBtnText: { color: '#fff', fontSize: 19, fontWeight: '800' },
+
+    pauseBtn: { marginTop: 14, backgroundColor: 'rgba(59,130,246,0.1)', borderRadius: 14, paddingHorizontal: 28, paddingVertical: 10, borderWidth: 1, borderColor: 'rgba(59,130,246,0.4)' },
+    pauseBtnText: { color: ACCENT, fontSize: 15, fontWeight: '700' },
+
     header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: BORDER },
     backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
     workoutTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
@@ -362,7 +437,7 @@ const s = StyleSheet.create({
     exCard: { padding: 16, gap: 12 },
     exHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     exName: { fontSize: 17, fontWeight: '700', color: ACCENT_LIGHT },
-    
+
     tableRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 8 },
     tableHead: { fontSize: 11, fontWeight: '700', color: TEXT_TERTIARY, letterSpacing: 0.5 },
     activeRow: { backgroundColor: 'rgba(59,130,246,0.08)' },
