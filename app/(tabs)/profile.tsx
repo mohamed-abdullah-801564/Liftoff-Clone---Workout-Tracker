@@ -20,6 +20,7 @@ import {
 } from '@/lib/theme'
 import { TAB_BAR_CLEARANCE } from '@/components/TabBar'
 import { Dumbbell, Activity, Flame, Trophy, Settings, LogOut, User, Trash2, Users, Calendar } from 'lucide-react-native'
+import { formatVolume } from '@/lib/utils'
 
 const SIMULATED_USERS = [
     { id: '1', name: 'Marcus.S' },
@@ -198,7 +199,7 @@ export default function ProfileScreen() {
                     </Card>
                     <Card style={s.statBox}>
                         <Activity size={20} color="#10b981" />
-                        <Text style={s.statVal}>{(stats.totalVolume / 1000).toFixed(1)}k</Text>
+                        <Text style={s.statVal}>{formatVolume(stats.totalVolume)}</Text>
                         <Text style={s.statLabel}>Total Vol</Text>
                     </Card>
                     <Card style={s.statBox}>
@@ -237,7 +238,7 @@ export default function ProfileScreen() {
                                     <Text style={s.rankText}>{index + 1}</Text>
                                     <Text style={[s.listItemText, user.id === 'me' && { color: ACCENT }]}>{user.id === 'me' ? 'You' : user.name}</Text>
                                 </View>
-                                <Text style={s.listItemVal}>{(user.volume / 1000).toFixed(1)}k kg</Text>
+                                <Text style={s.listItemVal}>{formatVolume(user.volume)}</Text>
                             </View>
                         ))}
                     </Card>
@@ -276,6 +277,10 @@ export default function ProfileScreen() {
                         <Text style={s.sectionTitle}>SETTINGS</Text>
                     </View>
                     <Card style={s.listCard}>
+                        <Pressable style={[s.listItem, s.borderBottom]} onPress={() => router.push('/weekly-plan')}>
+                            <View style={s.listIconText}><Calendar size={18} color={ACCENT} /><Text style={s.listItemText}>Weekly Planner</Text></View>
+                            <Text style={s.chevron}>›</Text>
+                        </Pressable>
                         <Pressable style={[s.listItem, s.borderBottom]} onPress={() => { setTempName(userName); setIsEditingName(true); }}>
                             <View style={s.listIconText}><User size={18} color={TEXT_SECONDARY} /><Text style={s.listItemText}>Edit Name</Text></View>
                             <Text style={s.chevron}>›</Text>

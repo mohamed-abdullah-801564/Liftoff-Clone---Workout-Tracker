@@ -328,3 +328,81 @@ After all fixes update ai-logs/interaction_log.md
 - Verified [workout-detail.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/workout-detail.tsx): Confirmed the detail screen correctly renders workout metadata (date, volume, duration) and a granular exercise/set list with completion status.
 - Verified [_layout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/_layout.tsx): Confirmed the `workout-detail` route is properly registered in the app stack.
 
+
+---
+
+## [2026-05-11] - Prompt
+Fix these 4 issues:
+Fix 1 — Remove duplicate Start Workout button on Home:
+In app/(tabs)/index.tsx, there are 2 Start Workout triggers — the button and a large blue card below it. Remove the large blue card completely. Keep only the original 'Start Workout' button that opens the bottom sheet with Quick Start and From Routine options.
+Fix 2 — Add Save/Done button after adding exercises to routine:
+In app/(tabs)/exercises.tsx, when mode is 'routine', add a floating 'Done — Save Routine' button fixed at the bottom of the screen. When tapped, it saves the routine with all selected exercises and navigates back to the routines screen showing a success toast. The user should never have to manually navigate back.
+Fix 3 — Restore Muscle Map button on Home screen:
+In app/(tabs)/index.tsx, re-add the 'Muscle Map' button that navigates to app/muscle-heatmap.tsx. Place it next to the Start Workout button as it was before.
+Fix 4 — Fix volume number formatting everywhere:
+Create a helper function formatVolume(kg: number) that returns exact number as string if below 1000 (e.g. '790 kg'), and uses k format only above 1000 (e.g. '1.2k kg'). Apply this function everywhere volume is displayed: Home screen, Workout Calendar, Profile stats, Workout History, Workout Detail screen.
+After all fixes update ai-logs/interaction_log.md.
+
+## What was done
+- Modified [utils.ts](file:///d:/template-mobile-main%20%281%29/template-mobile-main/lib/utils.ts): Created `formatVolume` helper to standardize weight display across the app (kg vs k kg).
+- Modified [index.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/index.tsx): 
+    - Removed the redundant large blue "Start Workout" hero card.
+    - Restored the "Muscle Map" action button to the quick actions row.
+    - Updated volume stats and workout list to use `formatVolume`.
+- Modified [exercises.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/exercises.tsx): Added a floating premium "Done — Save Routine" button that appears in routine-building mode, streamlining the UX by navigating automatically to the save screen.
+- Modified [workout-calendar.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/workout-calendar.tsx): Integrated `formatVolume` for session details.
+- Modified [profile.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/profile.tsx): Applied standardized volume formatting to total volume stats and community leaderboard.
+- Modified [workout-history.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/workout-history.tsx): Integrated `formatVolume` for historical session summaries.
+- Modified [workout-detail.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/workout-detail.tsx): Applied standardized volume formatting to the workout summary header.
+
+---
+
+## [2026-05-11] - Prompt
+Fix these issues:
+Fix 1 — Routine 'Start this Routine' loads empty screen:
+In app/routines.tsx, the 'Start this Routine' button is not correctly passing the routine exercises to the workout screen. Fix it to pass the routine data the same exact way the Home screen bottom sheet does when user selects a routine. Check how app/(tabs)/index.tsx passes routine data to app/(tabs)/workout.tsx and replicate that exact same logic in the routines screen.
+Fix 2 — Rework Workout tab purpose:
+Change app/(tabs)/workout.tsx so when user arrives at Workout tab WITHOUT an active session, it shows:
+'No active workout' message with 2 buttons: 'Quick Start' and 'From Routine'
+If there IS an active session in progress, show the workout logger as normal
+This way the tab is always useful and not confusing.
+Fix 3 — Fix '1.1k kg kg' double kg text on Home:
+In app/(tabs)/index.tsx, the weekly volume shows '1.1k kg kg' with kg written twice. Remove the duplicate 'kg' so it shows '1.1k kg' cleanly.
+Fix 4 — Allow multiple workouts per day:
+Remove any logic that prevents starting a new workout after completing one. Every time user taps Begin Workout it should start fresh regardless of how many workouts they did today.
+After fixes update ai-logs/interaction_log.md.
+
+## What was done
+- Modified [workout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/workout.tsx): 
+    - Implemented a "No Active Workout" empty state with Quick Start and Routine shortcuts, transforming the tab into a functional launchpad.
+    - Fixed a state synchronization issue where routine data from AsyncStorage could be overwritten by empty state on mount.
+    - Added comprehensive state reset in `finishWorkout` to ensure a completely fresh environment for subsequent sessions on the same day.
+    - Improved routine loading logic to correctly handle route parameters and trigger immediate session preparation.
+- Modified [index.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/index.tsx): 
+    - Fixed a redundant unit display bug in the weekly volume hero card (removed extra "kg").
+- Verified [routines.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/routines.tsx): Confirmed navigation and AsyncStorage parameters align with the optimized `workout.tsx` loading logic.
+- Fixed [workout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/workout.tsx): Resolved "Cannot find name 'Dumbbell'" error by adding the missing import from `lucide-react-native`.
+
+---
+
+## [2026-05-11] - Prompt
+Fix these 4 issues across the app:
+Fix 1 — Update volume formatting:
+In lib/utils.ts, update the formatVolume function to format numbers with thousands commas instead of the 'k' shorthand. It should output exact numbers like '21,100 kg' instead of '21.1k kg'. Use a regex for the commas (e.g., .replace(/\B(?=(\d{3})+(?!\d))/g, ",")) to avoid known Android toLocaleString() bugs.
+Fix 2 — Fix Start Workout text alignment:
+In app/(tabs)/index.tsx, locate the actionBtnText style and add textAlign: 'center' to ensure the text wraps and centers neatly inside the quick action buttons.
+Fix 3 — Add Weekly Planner feature:
+Create a new screen app/weekly-plan.tsx. It should read the user's saved routines and a weekly_plan object from AsyncStorage. Build a UI allowing users to assign one of their saved routines (or a Rest Day) to each day of the week (Monday-Sunday).
+In app/(tabs)/profile.tsx, add a "Weekly Planner" menu item under the Settings section that navigates to /weekly-plan.
+Fix 4 — Show Today's Plan on Home Screen:
+In app/(tabs)/index.tsx, read the weekly_plan from AsyncStorage. If a routine is assigned for the current day of the week, display a "Today's Plan" card above the Recent Workouts section. The card should display the routine name, exercise count, and a "Start" button that automatically loads the routine into the workout screen.
+
+## What was done
+- Modified [lib/utils.ts](file:///d:/template-mobile-main%20%281%29/template-mobile-main/lib/utils.ts): Updated `formatVolume` to use thousands commas (regex-based) for better readability and Android compatibility.
+- Modified [index.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/index.tsx): 
+    - Fixed text centering in quick action buttons.
+    - Implemented "Today's Plan" logic to dynamically show the scheduled routine for the current day.
+    - Added a "Start" button to the Today's Plan card that auto-loads the routine session.
+- [NEW] [weekly-plan.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/weekly-plan.tsx): Created a new screen for managing a 7-day workout schedule, allowing users to assign routines or rest days.
+- Modified [profile.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/profile.tsx): Added a "Weekly Planner" entry to the settings list.
+- Fixed [index.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/index.tsx): Resolved "Property 'section' does not exist" error by defining the missing style in the stylesheet.

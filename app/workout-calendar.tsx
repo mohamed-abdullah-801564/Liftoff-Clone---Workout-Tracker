@@ -16,6 +16,7 @@ import {
     BORDER,
 } from '@/lib/theme'
 import { ChevronLeft, Flame, Calendar as CalendarIcon, Info, Trophy } from 'lucide-react-native'
+import { formatVolume } from '@/lib/utils'
 
 export default function WorkoutCalendarScreen() {
     const insets = useSafeAreaInsets()
@@ -190,8 +191,7 @@ export default function WorkoutCalendarScreen() {
                                     <Text style={s.workoutMeta}>{w.exercises.length} Exercises • {w.duration}</Text>
                                 </View>
                                 <View style={s.volWrap}>
-                                    <Text style={s.volVal}>{(w.volume / 1000).toFixed(1)}k</Text>
-                                    <Text style={s.volUnit}>KG</Text>
+                                    <Text style={s.volVal}>{formatVolume(w.volume || 0)}</Text>
                                 </View>
                             </Card>
                         ))
@@ -231,7 +231,6 @@ const s = StyleSheet.create({
     workoutMeta: { fontSize: 12, color: TEXT_TERTIARY, marginTop: 4 },
     volWrap: { alignItems: 'flex-end' },
     volVal: { fontSize: 17, fontWeight: '800', color: ACCENT },
-    volUnit: { fontSize: 10, fontWeight: '800', color: TEXT_TERTIARY },
 
     emptyState: { alignItems: 'center', paddingVertical: 40, gap: 12 },
     emptyText: { fontSize: 14, color: TEXT_TERTIARY, fontWeight: '600' }

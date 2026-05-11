@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { View, ScrollView, StyleSheet, Pressable, TextInput, Animated } from 'react-native'
+import { View, ScrollView, StyleSheet, Pressable, TextInput, Animated, TouchableOpacity } from 'react-native'
 import { Toast, ToastHandle } from '@/components/Toast'
 import { useRef } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -84,6 +84,10 @@ export default function ExercisesScreen() {
         } catch (e) {
             console.error(e)
         }
+    }
+
+    const finalizeRoutine = async () => {
+        router.push('/create-routine')
     }
 
     return (
@@ -197,6 +201,19 @@ export default function ExercisesScreen() {
                 </View>
             </ScrollView>
 
+            {isRoutineMode && (
+                <View style={[s.floatingContainer, { bottom: insets.bottom + 20 }]}>
+                    <TouchableOpacity 
+                        style={s.finalizeBtn}
+                        activeOpacity={0.8}
+                        onPress={finalizeRoutine}
+                    >
+                        <Text style={s.finalizeBtnText}>Done — Save Routine</Text>
+                        <ChevronRight size={20} color="#fff" />
+                    </TouchableOpacity>
+                </View>
+            )}
+
             <Toast ref={toastRef} />
         </View>
     )
@@ -254,5 +271,21 @@ const s = StyleSheet.create({
     muscleTagText: { fontSize: 11, color: ACCENT_LIGHT, fontWeight: '700', textTransform: 'uppercase' },
     addBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(59, 130, 246, 0.1)', alignItems: 'center', justifyContent: 'center' },
 
-
+    floatingContainer: { position: 'absolute', left: 20, right: 20, alignItems: 'center' },
+    finalizeBtn: { 
+        backgroundColor: ACCENT, 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        paddingVertical: 16, 
+        paddingHorizontal: 32, 
+        borderRadius: 30, 
+        gap: 12,
+        shadowColor: ACCENT,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+        elevation: 10
+    },
+    finalizeBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
 })

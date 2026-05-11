@@ -9,6 +9,7 @@ import {
     BG, SURFACE, SURFACE2, ACCENT, ACCENT_LIGHT,
     TEXT_SECONDARY, TEXT_TERTIARY, BORDER
 } from '@/lib/theme'
+import { formatVolume } from '@/lib/utils'
 
 export default function WorkoutDetailScreen() {
     const insets = useSafeAreaInsets()
@@ -71,7 +72,7 @@ export default function WorkoutDetailScreen() {
                         <View style={s.metaItem}>
                             <BarChart2 size={16} color={ACCENT} />
                             <Text style={s.metaLabel}>Volume</Text>
-                            <Text style={s.metaValue}>{(workout.volume || 0).toLocaleString()} kg</Text>
+                            <Text style={s.metaValue}>{formatVolume(workout.volume || 0)}</Text>
                         </View>
                     </View>
                 </Card>

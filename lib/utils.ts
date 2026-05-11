@@ -52,3 +52,11 @@ export function adjustBrightness(hex: string, amount: number): string {
   const b = Math.max(0, Math.min(255, (num & 0xff) + amount))
   return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)
 }
+/**
+ * Formats volume (kg) with thousands separators.
+ * Example: 21100 -> "21,100 kg"
+ */
+export function formatVolume(kg: number): string {
+  const rounded = Math.round(kg)
+  return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " kg"
+}

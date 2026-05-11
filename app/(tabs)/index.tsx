@@ -23,6 +23,7 @@ import { TAB_BAR_CLEARANCE } from '@/components/TabBar'
 import { Flame, Trophy, Calendar, ChevronRight, Play, ArrowUpRight, Plus, Accessibility, Dumbbell, List } from 'lucide-react-native'
 import { BottomSheetModal, BottomSheetView, BottomSheetBackdrop } from '@gorhom/bottom-sheet'
 import { useMemo } from 'react'
+import { formatVolume } from '@/lib/utils'
 
 const { width } = Dimensions.get('window')
 
@@ -43,6 +44,8 @@ export default function HomeScreen() {
     const bottomSheetModalRef = useRef<BottomSheetModal>(null)
     const snapPoints = useMemo(() => ['45%'], [])
 
+    const [todayPlan, setTodayPlan] = useState<any>(null)
+
     const loadData = useCallback(async () => {
         setLoading(true)
         try {
@@ -51,11 +54,19 @@ export default function HomeScreen() {
             const savedName = await AsyncStorage.getItem('user_name')
             const savedAvatar = await AsyncStorage.getItem('user_avatar')
             const routinesData = await AsyncStorage.getItem('routines')
+            const p = await AsyncStorage.getItem('weekly_plan')
 
             if (savedName) setUserName(savedName.split(' ')[0]) // Just first name for greeting
             if (savedAvatar) setUserAvatar(JSON.parse(savedAvatar))
             if (routinesData) setSavedRoutines(JSON.parse(routinesData))
             
+            if (p) {
+                const plan = JSON.parse(p)
+                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+                const todayName = days[new Date().getDay()]
+                setTodayPlan(plan[todayName])
+            }
+
             const savedWorkouts = data ? JSON.parse(data) : []
             const currentList = currentEx ? JSON.parse(currentEx) : []
             
@@ -104,7 +115,7 @@ export default function HomeScreen() {
             const currentVol = calculateVol(thisWeekWorkouts)
             const prevVol = calculateVol(lastWeekWorkouts)
 
-            setWeeklyVolume(currentVol.toLocaleString())
+            setWeeklyVolume(formatVolume(currentVol))
             if (prevVol > 0) {
                 setTrend(Math.round(((currentVol - prevVol) / prevVol) * 100))
             } else if (currentVol > 0) {
@@ -125,7 +136,15 @@ export default function HomeScreen() {
         }, [loadData])
     )
 
-
+    const startPlan = async (routine: any) => {
+        try {
+            await AsyncStorage.setItem('current_workout_exercises', JSON.stringify(routine.exercises))
+            await AsyncStorage.setItem('current_workout_name', routine.name)
+            router.push('/workout')
+        } catch (e) {
+            console.error(e)
+        }
+    }
 
     return (
         <ScrollView
@@ -158,7 +177,7 @@ export default function HomeScreen() {
                         </View>
                     )}
                 </View>
-                <Text style={s.heroValue}>{weeklyVolume} <Text style={s.unitText}>kg</Text></Text>
+                <Text style={s.heroValue}>{weeklyVolume}</Text>
                 <View style={s.heroFooter}>
                     <Text style={s.heroSub}>Activity from last 7 days</Text>
                 </View>
@@ -168,6 +187,10 @@ export default function HomeScreen() {
                 <Pressable style={s.actionBtn} onPress={() => router.push('/routines')}>
                     <List size={20} color={ACCENT} />
                     <Text style={s.actionBtnText}>Routines</Text>
+                </Pressable>
+                <Pressable style={s.actionBtn} onPress={() => router.push('/muscle-heatmap')}>
+                    <Accessibility size={20} color={ACCENT} />
+                    <Text style={s.actionBtnText}>Muscle Map</Text>
                 </Pressable>
                 <Pressable style={s.actionBtn} onPress={() => bottomSheetModalRef.current?.present()}>
                     <Dumbbell size={20} color={ACCENT} />
@@ -190,25 +213,29 @@ export default function HomeScreen() {
                 </Pressable>
             )}
 
-            {/* Start Workout Primary Action */}
-            {!activeWorkout && (
-                <Pressable 
-                    style={({ pressed }) => [s.startBtn, pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }]}
-                    onPress={() => bottomSheetModalRef.current?.present()}
-                >
-                    <View style={s.startBtnContent}>
-                        <View style={s.playIconWrap}>
-                            <Play size={22} color="#fff" fill="#fff" />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                            <Text style={s.startBtnTitle}>Start Workout</Text>
-                            <Text style={s.startBtnSub}>Select from your routines or a new one</Text>
-                        </View>
-                        <ChevronRight size={20} color="rgba(255,255,255,0.5)" />
+
+            {/* Today's Plan */}
+            {todayPlan && !activeWorkout && (
+                <View style={s.section}>
+                    <View style={s.sectionHeader}>
+                        <Text style={s.sectionTitle}>Today's Plan</Text>
                     </View>
-                    {/* Glow effect */}
-                    <View style={s.btnGlow} />
-                </Pressable>
+                    <Card style={s.planCard}>
+                        <View style={s.planInfo}>
+                            <View style={s.planIcon}>
+                                <Calendar size={20} color={ACCENT} />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={s.planTitle}>{todayPlan.name}</Text>
+                                <Text style={s.planSub}>{todayPlan.exercises.length} exercises scheduled</Text>
+                            </View>
+                            <Pressable style={s.planStartBtn} onPress={() => startPlan(todayPlan)}>
+                                <Play size={16} color="#fff" fill="#fff" />
+                                <Text style={s.planStartText}>Start</Text>
+                            </Pressable>
+                        </View>
+                    </Card>
+                </View>
             )}
 
             {/* Recent Workouts List */}
@@ -232,7 +259,7 @@ export default function HomeScreen() {
                                 </Text>
                             </View>
                             <View style={s.workoutVolume}>
-                                <Text style={s.volValue}>{(workout.volume || 0).toLocaleString()} kg</Text>
+                                <Text style={s.volValue}>{formatVolume(workout.volume || 0)}</Text>
                                 <Text style={s.volLabel}>Volume</Text>
                             </View>
                         </Card>
@@ -373,6 +400,7 @@ const s = StyleSheet.create({
     startBtnSub: { fontSize: 14, color: 'rgba(255,255,255,0.7)', marginTop: 4, fontWeight: '500' },
     btnGlow: { position: 'absolute', top: -60, right: -60, width: 180, height: 180, borderRadius: 90, backgroundColor: '#fff', opacity: 0.15, filter: 'blur(50px)' },
 
+    section: { gap: 12, marginBottom: 24 },
     sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 8 },
     sectionTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
     viewAll: { fontSize: 14, color: ACCENT, fontWeight: '600' },
@@ -391,9 +419,17 @@ const s = StyleSheet.create({
     emptyBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: ACCENT, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 12 },
     emptyBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 
-    actionRow: { flexDirection: 'row', gap: 12, marginHorizontal: 20, marginBottom: 20 },
-    actionBtn: { flex: 1, backgroundColor: SURFACE, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderWidth: 1, borderColor: BORDER },
-    actionBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+    actionRow: { flexDirection: 'row', gap: 10, marginHorizontal: 20, marginBottom: 20 },
+    actionBtn: { flex: 1, backgroundColor: SURFACE, borderRadius: 16, paddingVertical: 14, alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderColor: BORDER },
+    actionBtnText: { color: '#fff', fontSize: 11, fontWeight: '700', textTransform: 'uppercase', textAlign: 'center' },
+    
+    planCard: { padding: 16, backgroundColor: SURFACE, borderColor: BORDER, borderWidth: 1 },
+    planInfo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    planIcon: { width: 40, height: 40, borderRadius: 10, backgroundColor: SURFACE2, alignItems: 'center', justifyContent: 'center' },
+    planTitle: { fontSize: 16, fontWeight: '700', color: '#fff' },
+    planSub: { fontSize: 12, color: TEXT_TERTIARY, marginTop: 2 },
+    planStartBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: ACCENT, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+    planStartText: { fontSize: 13, fontWeight: '700', color: '#fff' },
 
     activeCard: { padding: 20, backgroundColor: SURFACE, borderColor: 'rgba(59, 130, 246, 0.3)', borderWidth: 1.5, gap: 12 },
     activeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

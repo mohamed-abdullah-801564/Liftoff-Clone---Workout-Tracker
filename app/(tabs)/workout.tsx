@@ -19,7 +19,7 @@ import {
     ACCENT_LIGHT,
 } from '@/lib/theme'
 import { TAB_BAR_CLEARANCE } from '@/components/TabBar'
-import { Check, Plus, X, Timer, ChevronLeft, Trophy } from 'lucide-react-native'
+import { Check, Plus, X, Timer, ChevronLeft, Trophy, Dumbbell } from 'lucide-react-native'
 
 const { width, height } = Dimensions.get('window')
 
@@ -30,8 +30,9 @@ export default function WorkoutScreen() {
     const [workoutStarted, setWorkoutStarted] = useState(false)
     const [isRunning, setIsRunning] = useState(false)
     const [secondsElapsed, setSecondsElapsed] = useState(0)
-    const [workoutName, setWorkoutName] = useState((routineName as string) || '')
+    const [workoutName, setWorkoutName] = useState('')
     const [exercises, setExercises] = useState<any[]>([])
+    const [isLoaded, setIsLoaded] = useState(false)
     const [previousPRs, setPreviousPRs] = useState<Record<string, number>>({})
     const toastRef = useRef<ToastHandle>(null)
 
@@ -59,13 +60,23 @@ export default function WorkoutScreen() {
                 const list = JSON.parse(data)
                 setExercises(list.map((ex: any) => ({
                     ...ex,
-                    sets: ex.sets || [{ id: Date.now() + Math.random(), weight: '', reps: '', status: 'active' }]
+                    sets: (ex.sets && ex.sets.length > 0) ? ex.sets : [{ id: Date.now() + Math.random(), weight: '', reps: '', status: 'active' }]
                 })))
+            } else {
+                setExercises([])
             }
+            
+            // If routineName is passed, it means we are starting a specific routine
+            if (routineName) {
+                setWorkoutName(routineName as string)
+            }
+            
+            setIsLoaded(true)
         } catch (e) {
             console.error(e)
+            setIsLoaded(true)
         }
-    }, [])
+    }, [routineName])
 
     // Timer — only ticks when workoutStarted AND isRunning
     useEffect(() => {
@@ -89,13 +100,12 @@ export default function WorkoutScreen() {
         }, [loadWorkout])
     )
 
-    // Save to AsyncStorage whenever exercises change so Home screen count is accurate
-    // and we don't lose set data when navigating to Add Exercises and back.
+    // Save to AsyncStorage whenever exercises change
     useEffect(() => {
-        if (!loading) {
+        if (isLoaded) {
             AsyncStorage.setItem('current_workout_exercises', JSON.stringify(exercises))
         }
-    }, [exercises, loading])
+    }, [exercises, isLoaded])
 
     const triggerPRCelebration = (exerciseName: string) => {
         setShowPR(exerciseName)
@@ -211,10 +221,13 @@ export default function WorkoutScreen() {
             await AsyncStorage.setItem('workouts', JSON.stringify(list))
             await AsyncStorage.removeItem('current_workout_exercises')
 
-            // Reset state
+            // Reset state COMPLETELY to allow multiple workouts per day fresh
             setExercises([])
+            setIsLoaded(false)
             setWorkoutName('')
             setSecondsElapsed(0)
+            setWorkoutStarted(false)
+            setIsRunning(false)
 
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
             toastRef.current?.show(`Workout Complete! Total Volume: ${totalVolume.toLocaleString()} kg`)
@@ -226,14 +239,70 @@ export default function WorkoutScreen() {
 
 
 
-    // ── Begin Workout splash ──────────────────────────────────────────────
+    if (!isLoaded) {
+        return (
+            <View style={[s.splashContainer, { backgroundColor: BG, justifyContent: 'center' }]}>
+                <ActivityIndicator size="large" color={ACCENT} />
+            </View>
+        )
+    }
+
+    // ── Fix 2: Rework Workout tab purpose when NO session exists ──────────
+    if (exercises.length === 0) {
+        return (
+            <View style={[s.splashContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+                <View style={s.splashBody}>
+                    <View style={s.splashIconRing}>
+                        <Dumbbell size={54} color={ACCENT} />
+                    </View>
+                    <View style={{ alignItems: 'center', gap: 12 }}>
+                        <Text style={s.splashTitle}>No Active Workout</Text>
+                        <Text style={s.splashSub}>Start a fresh session or choose from your routines.</Text>
+                    </View>
+
+                    <View style={{ width: '100%', gap: 12, marginTop: 10 }}>
+                        <TouchableOpacity
+                            style={s.beginBtn}
+                            activeOpacity={0.8}
+                            onPress={() => {
+                                setWorkoutStarted(true)
+                                setIsRunning(true)
+                                setExercises([]) // Explicitly empty
+                                setIsLoaded(true)
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                            }}
+                        >
+                            <Text style={s.beginBtnText}>Quick Start</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[s.beginBtn, { backgroundColor: SURFACE, borderWidth: 1, borderColor: BORDER }]}
+                            activeOpacity={0.8}
+                            onPress={() => router.push('/routines')}
+                        >
+                            <Text style={[s.beginBtnText, { color: ACCENT }]}>From Routine</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+                <Toast ref={toastRef} />
+            </View>
+        )
+    }
+
+    // ── Begin Workout splash (Ready to Train) ─────────────────────────────
     if (!workoutStarted) {
         return (
             <View style={[s.splashContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
                 {/* Header */}
                 <View style={[s.header, { borderBottomWidth: 0 }]}>
-                    <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-                        <ChevronLeft size={24} color="#fff" />
+                    <TouchableOpacity onPress={() => {
+                        // If we are canceling a routine selection, clear it
+                        AsyncStorage.removeItem('current_workout_exercises').then(() => {
+                            setExercises([])
+                            setWorkoutStarted(false)
+                        })
+                    }} style={s.backBtn}>
+                        <X size={24} color={TEXT_TERTIARY} />
                     </TouchableOpacity>
                 </View>
 
@@ -244,7 +313,7 @@ export default function WorkoutScreen() {
                     </View>
                     <View style={{ alignItems: 'center', gap: 12 }}>
                         <Text style={s.splashTitle}>Ready to Train?</Text>
-                        <Text style={s.splashSub}>Your exercises are loaded and ready. Start the session to begin tracking your time.</Text>
+                        <Text style={s.splashSub}>{exercises.length} exercises loaded and ready. Start the session to begin tracking.</Text>
                     </View>
 
                     <TextInput

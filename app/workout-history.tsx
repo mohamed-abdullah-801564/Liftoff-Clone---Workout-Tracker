@@ -7,6 +7,7 @@ import { ChevronLeft, Calendar, BarChart2, Dumbbell, ChevronRight } from 'lucide
 import { Text } from '@/components/ui/Text'
 import { Card } from '@/components/ui/Card'
 import { BG, SURFACE, SURFACE2, ACCENT, TEXT_SECONDARY, TEXT_TERTIARY, BORDER, ACCENT_LIGHT } from '@/lib/theme'
+import { formatVolume } from '@/lib/utils'
 
 export default function WorkoutHistoryScreen() {
     const insets = useSafeAreaInsets()
@@ -62,7 +63,7 @@ export default function WorkoutHistoryScreen() {
                                     <View style={s.cardStats}>
                                         <View style={s.cardStat}>
                                             <BarChart2 size={14} color={ACCENT} />
-                                            <Text style={s.cardStatText}>{w.volume.toLocaleString()} kg</Text>
+                                            <Text style={s.cardStatText}>{formatVolume(w.volume || 0)}</Text>
                                         </View>
                                         <View style={s.cardStat}>
                                             <Dumbbell size={14} color={ACCENT} />
