@@ -49,6 +49,122 @@ export default function HomeScreen() {
     const loadData = useCallback(async () => {
         setLoading(true)
         try {
+            // Seed quick workouts if not done yet
+            const seeded = await AsyncStorage.getItem('seeded_quick_workouts')
+            if (!seeded) {
+                const now = new Date()
+                const today = new Date(now).toISOString()
+                const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
+                const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString()
+
+                const quickWorkouts = [
+                    {
+                        id: 'seed-1',
+                        name: 'Push Day',
+                        date: twoDaysAgo,
+                        duration: '00:45:00',
+                        volume: 1460,
+                        totalSets: 3,
+                        exercises: [
+                            {
+                                id: '1',
+                                name: 'Bench Press (Barbell)',
+                                volume: 500,
+                                completedSets: 1,
+                                sets: [{ id: 'bp-1', weight: '100', reps: '5', status: 'completed' }]
+                            },
+                            {
+                                id: '4',
+                                name: 'Overhead Press (Barbell)',
+                                volume: 480,
+                                completedSets: 1,
+                                sets: [{ id: 'sp-1', weight: '60', reps: '8', status: 'completed' }]
+                            },
+                            {
+                                id: '11',
+                                name: 'Tricep Pushdown',
+                                volume: 480,
+                                completedSets: 1,
+                                sets: [{ id: 'te-1', weight: '40', reps: '12', status: 'completed' }]
+                            }
+                        ]
+                    },
+                    {
+                        id: 'seed-2',
+                        name: 'Pull Day',
+                        date: yesterday,
+                        duration: '00:50:00',
+                        volume: 1940,
+                        totalSets: 3,
+                        exercises: [
+                            {
+                                id: '2',
+                                name: 'Deadlift (Conventional)',
+                                volume: 600,
+                                completedSets: 1,
+                                sets: [{ id: 'dl-1', weight: '120', reps: '5', status: 'completed' }]
+                            },
+                            {
+                                id: '5',
+                                name: 'Pull Up',
+                                volume: 640,
+                                completedSets: 1,
+                                sets: [{ id: 'pu-1', weight: '80', reps: '8', status: 'completed' }]
+                            },
+                            {
+                                id: '7',
+                                name: 'Barbell Row (Bent Over)',
+                                volume: 700,
+                                completedSets: 1,
+                                sets: [{ id: 'br-1', weight: '70', reps: '10', status: 'completed' }]
+                            }
+                        ]
+                    },
+                    {
+                        id: 'seed-3',
+                        name: 'Leg Day',
+                        date: today,
+                        duration: '01:00:00',
+                        volume: 2800,
+                        totalSets: 3,
+                        exercises: [
+                            {
+                                id: '3',
+                                name: 'Squat (Barbell High Bar)',
+                                volume: 500,
+                                completedSets: 1,
+                                sets: [{ id: 'sq-1', weight: '100', reps: '5', status: 'completed' }]
+                            },
+                            {
+                                id: '8',
+                                name: 'Leg Press',
+                                volume: 1400,
+                                completedSets: 1,
+                                sets: [{ id: 'lp-1', weight: '140', reps: '10', status: 'completed' }]
+                            },
+                            {
+                                id: '19',
+                                name: 'Calf Raise (Standing)',
+                                volume: 900,
+                                completedSets: 1,
+                                sets: [{ id: 'cr-1', weight: '60', reps: '15', status: 'completed' }]
+                            }
+                        ]
+                    }
+                ]
+
+                const existingWorkoutsStr = await AsyncStorage.getItem('workouts')
+                let existingWorkouts = existingWorkoutsStr ? JSON.parse(existingWorkoutsStr) : []
+                
+                // Add the seeded workouts to history if they aren't already there
+                const filteredSeeds = quickWorkouts.filter(seed => !existingWorkouts.some((w: any) => w.id === seed.id))
+                if (filteredSeeds.length > 0) {
+                    existingWorkouts = [...existingWorkouts, ...filteredSeeds]
+                    await AsyncStorage.setItem('workouts', JSON.stringify(existingWorkouts))
+                }
+                await AsyncStorage.setItem('seeded_quick_workouts', 'true')
+            }
+
             const data = await AsyncStorage.getItem('workouts')
             const currentEx = await AsyncStorage.getItem('current_workout_exercises')
             const savedName = await AsyncStorage.getItem('user_name')
