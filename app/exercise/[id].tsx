@@ -15,7 +15,6 @@ import {
 } from '@/lib/theme'
 import { ChevronLeft, Info, Trophy, Target, History, Settings } from 'lucide-react-native'
 import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg'
-import { ExpoLinearGradient } from 'expo-linear-gradient'
 
 const { width } = Dimensions.get('window')
 

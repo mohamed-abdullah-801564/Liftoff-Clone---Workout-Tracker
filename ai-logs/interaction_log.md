@@ -406,3 +406,38 @@ In app/(tabs)/index.tsx, read the weekly_plan from AsyncStorage. If a routine is
 - [NEW] [weekly-plan.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/weekly-plan.tsx): Created a new screen for managing a 7-day workout schedule, allowing users to assign routines or rest days.
 - Modified [profile.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/profile.tsx): Added a "Weekly Planner" entry to the settings list.
 - Fixed [index.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/index.tsx): Resolved "Property 'section' does not exist" error by defining the missing style in the stylesheet.
+
+---
+
+## [2026-05-18] - Prompt
+In app/(tabs)/workout.tsx, locate the condition if (exercises.length === 0) (around line 203). Change it to if (exercises.length === 0 && !workoutStarted). This ensures that when the user taps the 'Quick Start' button and workoutStarted is set to true, they actually proceed to the active workout screen instead of being trapped on the empty state.
+
+and also update my message and your response in ai-logs/interaction_log.md
+
+## What was done
+- Modified [workout.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/workout.tsx): Updated the empty state condition from `if (exercises.length === 0)` to `if (exercises.length === 0 && !workoutStarted)` to prevent users from being trapped on the empty state when hitting Quick Start.
+
+---
+
+## [2026-05-18] - Prompt
+In app/(tabs)/exercises.tsx, we need to fix the routine builder UI. First, delete the floating bottom container (floatingContainer and finalizeBtn) that contains the 'Done — Save Routine' button. Second, modify the header (s.header) at the top of the file. If isRoutineMode is true, add a 'Done' text button to the top right corner of the header. When clicked, this 'Done' button should call finalizeRoutine (which navigates back to the create routine screen).
+
+Fix the state loss issue in the Routine Builder.
+In app/create-routine.tsx, the routineName state resets when navigating to the exercise library and back. Update the TextInput's onChangeText to also save the value to AsyncStorage.setItem('temp_routine_name', val).
+Inside the loadTempExercises function (or useFocusEffect), add logic to await AsyncStorage.getItem('temp_routine_name') and setRoutineName so the name persists when the user returns.
+Inside the saveRoutine function, add await AsyncStorage.removeItem('temp_routine_name') so it clears out upon a successful save.
+In app/routines.tsx, update the 'Create New Routine' button's onPress to also await AsyncStorage.removeItem('temp_routine_name') alongside the exercises so fresh routines always start with a blank name.
+
+hey dont forget to update ai-logs/interaction_log.md file
+
+## What was done
+- Modified [exercises.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/%28tabs%29/exercises.tsx):
+  - Removed the bottom floating container containing the "Done — Save Routine" button.
+  - Updated the header layout to include a sleek "Done" text button on the top right when in routine builder mode (`isRoutineMode === true`).
+- Modified [create-routine.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/create-routine.tsx):
+  - Updated `TextInput`'s `onChangeText` to store the routine name to `AsyncStorage` under `temp_routine_name`.
+  - Added logic in `loadTempExercises` to retrieve the saved `temp_routine_name` from `AsyncStorage` and restore it in the state.
+  - Added clean-up code to delete `temp_routine_name` from `AsyncStorage` on a successful routine save.
+- Modified [routines.tsx](file:///d:/template-mobile-main%20%281%29/template-mobile-main/app/routines.tsx):
+  - Added logic to clear `temp_routine_name` from `AsyncStorage` when the "Create New Routine" button is pressed, ensuring that starting a fresh routine starts with a blank name instead of a leftover one.
+

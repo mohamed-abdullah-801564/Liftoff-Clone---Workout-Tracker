@@ -68,7 +68,10 @@ export default function WorkoutScreen() {
             
             // If routineName is passed, it means we are starting a specific routine
             if (routineName) {
-                setWorkoutName(routineName as string)
+                const nameStr = Array.isArray(routineName) ? routineName[0] : routineName
+                setWorkoutName(nameStr)
+                // Clear the param so it doesn't get re-applied indefinitely if we navigate away and back
+                router.setParams({ routineName: undefined })
             }
             
             setIsLoaded(true)
@@ -148,33 +151,35 @@ export default function WorkoutScreen() {
     }
 
     const toggleSetStatus = (exId: string, setId: string) => {
+        const exercise = exercises.find(ex => ex.id === exId || ex.instanceId === exId)
+        if (!exercise) return
+
+        const set = exercise.sets.find((s: any) => s.id === setId)
+        if (!set) return
+
+        const isMarkingCompleted = set.status !== 'completed'
         let isPR = false
-        let exName = ''
+
+        if (isMarkingCompleted) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+            const weight = parseFloat(set.weight) || 0
+            if (weight > (previousPRs[exercise.name] || 0) && weight > 0) {
+                isPR = true
+            }
+        }
 
         setExercises(prev => prev.map(ex => {
             if (ex.id !== exId && ex.instanceId !== exId) return ex
-            exName = ex.name
             return {
                 ...ex,
-                sets: ex.sets.map((s: any) => {
-                    if (s.id === setId) {
-                        const newStatus = s.status === 'completed' ? 'active' : 'completed'
-                        if (newStatus === 'completed') {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-                            const weight = parseFloat(s.weight) || 0
-                            if (weight > (previousPRs[ex.name] || 0) && weight > 0) {
-                                isPR = true
-                            }
-                        }
-                        return { ...s, status: newStatus }
-                    }
-                    return s
-                })
+                sets: ex.sets.map((s: any) => 
+                    s.id === setId ? { ...s, status: isMarkingCompleted ? 'completed' : 'active' } : s
+                )
             }
         }))
 
         if (isPR) {
-            triggerPRCelebration(exName)
+            triggerPRCelebration(exercise.name)
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
         }
     }
@@ -248,7 +253,7 @@ export default function WorkoutScreen() {
     }
 
     // ── Fix 2: Rework Workout tab purpose when NO session exists ──────────
-    if (exercises.length === 0) {
+    if (exercises.length === 0 && !workoutStarted) {
         return (
             <View style={[s.splashContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
                 <View style={s.splashBody}>

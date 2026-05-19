@@ -6,6 +6,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { ChevronLeft, Calendar, Info, Check, X } from 'lucide-react-native'
 import { Text } from '@/components/ui/Text'
 import { Card } from '@/components/ui/Card'
+import { Toast, ToastHandle } from '@/components/Toast'
+import { useRef } from 'react'
 import { BG, SURFACE, SURFACE2, ACCENT, TEXT_SECONDARY, TEXT_TERTIARY, BORDER } from '@/lib/theme'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -15,6 +17,8 @@ export default function WeeklyPlanScreen() {
     const [plan, setPlan] = useState<Record<string, any>>({})
     const [routines, setRoutines] = useState<any[]>([])
     const [selectedDay, setSelectedDay] = useState<string | null>(null)
+    const [saving, setSaving] = useState(false)
+    const toastRef = useRef<ToastHandle>(null)
 
     useEffect(() => {
         loadData()
@@ -27,11 +31,24 @@ export default function WeeklyPlanScreen() {
         if (r) setRoutines(JSON.parse(r))
     }
 
-    const setDayRoutine = async (day: string, routine: any) => {
+    const setDayRoutine = (day: string, routine: any) => {
         const newPlan = { ...plan, [day]: routine }
         setPlan(newPlan)
-        await AsyncStorage.setItem('weekly_plan', JSON.stringify(newPlan))
         setSelectedDay(null)
+    }
+
+    const savePlan = async () => {
+        setSaving(true)
+        try {
+            await AsyncStorage.setItem('weekly_plan', JSON.stringify(plan))
+            toastRef.current?.show('Weekly plan saved!')
+            setTimeout(() => router.back(), 1000)
+        } catch (e) {
+            console.error(e)
+            toastRef.current?.show('Error saving plan')
+        } finally {
+            setSaving(false)
+        }
     }
 
     return (
@@ -41,7 +58,9 @@ export default function WeeklyPlanScreen() {
                     <ChevronLeft size={24} color="#fff" />
                 </Pressable>
                 <Text style={s.title}>Weekly Planner</Text>
-                <View style={{ width: 40 }} />
+                <Pressable onPress={savePlan} disabled={saving} style={s.saveBtn}>
+                    <Text style={s.saveBtnText}>Save</Text>
+                </Pressable>
             </View>
 
             <ScrollView style={{ flex: 1 }} contentContainerStyle={s.scrollContent}>
@@ -106,6 +125,8 @@ export default function WeeklyPlanScreen() {
                     </Card>
                 </View>
             </Modal>
+            
+            <Toast ref={toastRef} />
         </View>
     )
 }
@@ -115,6 +136,8 @@ const s = StyleSheet.create({
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: BORDER },
     backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', backgroundColor: SURFACE2, borderRadius: 12 },
     title: { fontSize: 18, fontWeight: '800', color: '#fff' },
+    saveBtn: { paddingHorizontal: 12, paddingVertical: 6 },
+    saveBtnText: { color: ACCENT, fontSize: 16, fontWeight: '700' },
     scrollContent: { padding: 20, gap: 12 },
     infoCard: { flexDirection: 'row', gap: 12, alignItems: 'center', padding: 16, backgroundColor: 'rgba(59, 130, 246, 0.05)', borderStyle: 'dashed', borderWidth: 1, borderColor: 'rgba(59, 130, 246, 0.2)' },
     infoText: { flex: 1, fontSize: 13, color: TEXT_SECONDARY, lineHeight: 18 },

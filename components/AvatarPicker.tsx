@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { View, StyleSheet, Pressable, Modal, Dimensions } from 'react-native'
 import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
+import * as FileSystem from 'expo-file-system'
+const FS = FileSystem as any
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Text } from '@/components/ui/Text'
 import { BG, SURFACE, SURFACE2, ACCENT, TEXT_SECONDARY, BORDER } from '@/lib/theme'
@@ -33,10 +35,27 @@ export function AvatarPicker({ visible, onClose, onSelect }: AvatarPickerProps) 
         })
 
         if (!result.canceled) {
-            const avatarData = { type: 'image', uri: result.assets[0].uri }
-            await AsyncStorage.setItem('user_avatar', JSON.stringify(avatarData))
-            onSelect(avatarData)
-            onClose()
+            const tempUri = result.assets[0].uri
+            const fileName = `avatar_${Date.now()}.jpg`
+            const permanentUri = `${FS.documentDirectory}${fileName}`
+            
+            try {
+                await FS.copyAsync({
+                    from: tempUri,
+                    to: permanentUri
+                })
+                
+                const avatarData = { type: 'image', uri: permanentUri }
+                await AsyncStorage.setItem('user_avatar', JSON.stringify(avatarData))
+                onSelect(avatarData)
+                onClose()
+            } catch (e) {
+                console.error("Error saving avatar:", e)
+                // Fallback to default behavior if copy fails
+                const avatarData = { type: 'image', uri: tempUri }
+                onSelect(avatarData)
+                onClose()
+            }
         }
     }
 

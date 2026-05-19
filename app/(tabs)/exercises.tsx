@@ -92,8 +92,13 @@ export default function ExercisesScreen() {
 
     return (
         <View style={{ flex: 1, backgroundColor: BG }}>
-            <View style={[s.header, { paddingTop: insets.top + 10 }]}>
+            <View style={[s.header, { paddingTop: insets.top + 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
                 <Text style={s.title}>Exercise Library</Text>
+                {isRoutineMode && (
+                    <TouchableOpacity onPress={finalizeRoutine}>
+                        <Text style={{ color: ACCENT, fontSize: 16, fontWeight: '700' }}>Done</Text>
+                    </TouchableOpacity>
+                )}
             </View>
 
             {/* Search Bar */}
@@ -201,18 +206,7 @@ export default function ExercisesScreen() {
                 </View>
             </ScrollView>
 
-            {isRoutineMode && (
-                <View style={[s.floatingContainer, { bottom: insets.bottom + 20 }]}>
-                    <TouchableOpacity 
-                        style={s.finalizeBtn}
-                        activeOpacity={0.8}
-                        onPress={finalizeRoutine}
-                    >
-                        <Text style={s.finalizeBtnText}>Done — Save Routine</Text>
-                        <ChevronRight size={20} color="#fff" />
-                    </TouchableOpacity>
-                </View>
-            )}
+
 
             <Toast ref={toastRef} />
         </View>

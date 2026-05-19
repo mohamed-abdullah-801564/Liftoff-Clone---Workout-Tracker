@@ -120,12 +120,25 @@ export default function ProfileScreen() {
     useFocusEffect(useCallback(() => { loadData() }, [loadData]))
 
     const leaderboardData = useMemo(() => {
+        const getDeterministicRandom = (seed: string) => {
+            let hash = 0
+            for (let i = 0; i < seed.length; i++) {
+                hash = ((hash << 5) - hash) + seed.charCodeAt(i)
+                hash |= 0
+            }
+            return (Math.abs(hash) % 1000) / 1000
+        }
+
         const multiplier = leaderboardTab === 'weekly' ? 1 : 4
-        const entries = SIMULATED_USERS.map(u => ({
-            id: u.id,
-            name: u.name,
-            volume: Math.floor((15000 + (parseInt(u.id) * 1200) + Math.random() * 500) * multiplier)
-        }))
+        const entries = SIMULATED_USERS.map(u => {
+            const seed = u.id + u.name
+            const randomVal = getDeterministicRandom(seed)
+            return {
+                id: u.id,
+                name: u.name,
+                volume: Math.floor((15000 + (parseInt(u.id) * 1200) + randomVal * 500) * multiplier)
+            }
+        })
         const myVol = leaderboardTab === 'weekly' ? stats.weeklyVolume : stats.monthlyVolume
         entries.push({ id: 'me', name: userName, volume: myVol })
         return entries.sort((a, b) => b.volume - a.volume)

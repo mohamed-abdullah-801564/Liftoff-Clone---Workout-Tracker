@@ -106,7 +106,11 @@ export default function RoutinesScreen() {
             >
                 <Pressable 
                     style={s.createBtn}
-                    onPress={() => router.push('/create-routine')}
+                    onPress={async () => {
+                        await AsyncStorage.removeItem('temp_routine_exercises')
+                        await AsyncStorage.removeItem('temp_routine_name')
+                        router.push('/create-routine')
+                    }}
                 >
                     <Plus size={20} color="#fff" />
                     <Text style={s.createBtnText}>Create New Routine</Text>
@@ -155,12 +159,20 @@ export default function RoutinesScreen() {
                                             </View>
                                         ))}
                                     </View>
-                                    <Pressable 
-                                        style={s.startBtn}
-                                        onPress={() => startRoutine(routine)}
-                                    >
-                                        <Text style={s.startBtnText}>Start This Routine</Text>
-                                    </Pressable>
+                                    <View style={s.expandedActions}>
+                                        <Pressable 
+                                            style={s.startBtn}
+                                            onPress={() => startRoutine(routine)}
+                                        >
+                                            <Text style={s.startBtnText}>Start This Routine</Text>
+                                        </Pressable>
+                                        <Pressable 
+                                            style={s.deleteBtn}
+                                            onPress={() => deleteRoutine(routine.id, routine.name)}
+                                        >
+                                            <Trash2 size={20} color="#ef4444" />
+                                        </Pressable>
+                                    </View>
                                 </View>
                             )}
                         </Card>
@@ -203,8 +215,10 @@ const s = StyleSheet.create({
     exerciseItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     exerciseItemText: { fontSize: 14, color: '#fff', fontWeight: '500' },
     exerciseItemMuscle: { fontSize: 11, color: TEXT_TERTIARY, fontWeight: '700', textTransform: 'uppercase' },
-    startBtn: { backgroundColor: ACCENT, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
+    expandedActions: { flexDirection: 'row', gap: 12, alignItems: 'center' },
+    startBtn: { flex: 1, backgroundColor: ACCENT, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
     startBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+    deleteBtn: { backgroundColor: 'rgba(239, 68, 68, 0.1)', width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 
     emptyState: { alignItems: 'center', justifyContent: 'center', paddingTop: 60, gap: 12 },
     emptyTitle: { fontSize: 18, fontWeight: '700', color: TEXT_SECONDARY },

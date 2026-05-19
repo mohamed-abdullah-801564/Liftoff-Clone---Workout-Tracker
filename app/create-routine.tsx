@@ -32,6 +32,13 @@ export default function CreateRoutineScreen() {
             const data = await AsyncStorage.getItem('temp_routine_exercises')
             if (data) {
                 setExercises(JSON.parse(data))
+            } else {
+                setExercises([])
+            }
+            
+            const storedName = await AsyncStorage.getItem('temp_routine_name')
+            if (storedName) {
+                setRoutineName(storedName)
             }
         } catch (e) {
             console.error(e)
@@ -86,10 +93,11 @@ export default function CreateRoutineScreen() {
             
             await AsyncStorage.setItem('routines', JSON.stringify(list))
             await AsyncStorage.removeItem('temp_routine_exercises')
+            await AsyncStorage.removeItem('temp_routine_name')
             
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
             toastRef.current?.show('Routine saved!')
-            setTimeout(() => router.replace('/routines'), 1000)
+            setTimeout(() => router.back(), 1000)
         } catch (e) {
             console.error(e)
             toastRef.current?.show('Error saving routine')
@@ -120,7 +128,10 @@ export default function CreateRoutineScreen() {
                     <TextInput 
                         style={s.nameInput}
                         value={routineName}
-                        onChangeText={setRoutineName}
+                        onChangeText={async (val) => {
+                            setRoutineName(val)
+                            await AsyncStorage.setItem('temp_routine_name', val)
+                        }}
                         placeholder="e.g. Upper Body Power"
                         placeholderTextColor={TEXT_TERTIARY}
                         autoFocus
